@@ -7,7 +7,6 @@ import folium
 from branca.colormap import LinearColormap
 import random
 from sklearn.neighbors import KNeighborsRegressor
-
 from MapTypes import MapTypes
 
 cmap = LinearColormap(['red', 'yellow', 'green'], vmin=0, vmax=1)
@@ -15,13 +14,15 @@ m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=1
                min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
 
 
-def create_map(json_data, map_type):
+def create_map(json_data, map_type, target_id):
     if map_type == MapTypes.ID:
         return create_map_with_id(json_data)
     elif map_type == MapTypes.KNN:
         return create_map_knn(json_data)
     elif map_type == MapTypes.Stability:
         return create_map_with_stability(json_data)
+    elif map_type == MapTypes.Specific_ID:
+        return get_map_for_specific_id(json_data, target_id)
     else:
         return create_map_with_id(json_data)
 
@@ -101,6 +102,60 @@ def create_map_with_id(json_data):
                    ).add_to(m)
 
     return m._repr_html_()
+
+
+def get_map_for_specific_id(json_data, target_id):
+    # Create a new Folium Map object
+    m = folium.Map(location=[0, 0], zoom_start=2)
+    # Initialize the id and the last coordinate
+    id_counter = 0
+    last_coordinate = None
+
+    # Filter features for the specified ID
+    features_for_id = []
+
+    # Iterate over the features to assign IDs and collect features for the target ID
+    for feature in json_data['features']:
+        # If the feature starts with the same coordinate as the last feature ended, assign the same id
+        if last_coordinate is not None and feature['geometry']['coordinates'][0] == last_coordinate:
+            feature['properties']['id'] = id_counter
+        else:
+            # Otherwise, increment the id and assign it to the feature
+            id_counter += 1
+            feature['properties']['id'] = id_counter
+
+        # Update the last coordinate
+        last_coordinate = feature['geometry']['coordinates'][-1]
+
+        # Collect features for the target ID
+        if feature['properties']['id'] == target_id:
+            features_for_id.append(feature)
+
+    # Create a GeoDataFrame from the filtered features for the target ID
+    gdf = gpd.GeoDataFrame.from_features(features_for_id)
+    # Create a map which only contains the data of the target_id in blue color
+    # Set the CRS
+    gdf.set_crs(epsg=4326, inplace=True)
+
+    # Add the data
+    color_dict = {id: get_random_color() for id in gdf['id'].unique()}
+
+    # Add the data
+    folium.GeoJson(gdf,
+                   style_function=lambda feature: {
+                       'color': 'blue',
+                       'weight': 2,
+                       'fillOpacity': 0.6
+                   },
+                   highlight_function=lambda feature: {
+                       'weight': 3,
+                       'fillOpacity': 0.6
+                   },
+                   tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id'])
+                   ).add_to(m)
+
+    return m._repr_html_()
+
 
 
 def create_map_knn(json_data):
