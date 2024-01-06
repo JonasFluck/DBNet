@@ -106,7 +106,8 @@ def create_map_with_id(json_data):
 
 def get_map_for_specific_id(json_data, target_id):
     # Create a new Folium Map object
-    m = folium.Map(location=[0, 0], zoom_start=2)
+    m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
+               min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
     # Initialize the id and the last coordinate
     id_counter = 0
     last_coordinate = None
