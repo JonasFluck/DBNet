@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class MapTypes(Enum):
+    Gauss = 5
     Color = 0
     KNN = 1
     ID = 2

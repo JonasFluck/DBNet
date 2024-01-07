@@ -3,6 +3,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import mapCreator
 from MapTypes import MapTypes
+import matplotlib.pyplot as plt
 
 # Load the JSON data from a file
 with open('db.json') as f:
@@ -20,12 +21,14 @@ def get_map(map_type, specific_id=None):
         return mapCreator.create_map(json_data, MapTypes.Stability, specific_id)
     elif map_type == MapTypes.Specific_ID:
         return mapCreator.create_map(json_data, MapTypes.Specific_ID, specific_id)
+    elif map_type == MapTypes.Gauss:
+        return mapCreator.create_map(json_data, MapTypes.Gauss, specific_id)
 
 
 # Create radio buttons in the sidebar
 option = st.sidebar.radio(
     'Select a map',
-    ('Map with id', 'Map with knn', 'Map with stability', 'Map with special ID'))
+    ('Map with id', 'Map with knn', 'Map with stability', 'Map with special ID', 'Map with Gauss'))
 
 # Display a different map depending on the selected option
 if option == 'Map with id':
@@ -43,6 +46,21 @@ elif option == 'Map with special ID':
         st.error("Please enter a valid integer for the special ID.")
         st.stop()
     map_html = get_map(MapTypes.Specific_ID, specific_id=special_id)
+elif option == 'Map with Gauss':
+    special_id = st.text_input("Enter Special ID")  # Default value is '4', you can change it
+    try:
+        special_id = int(special_id)
+    except ValueError:
+        st.error("Please enter a valid integer for the special ID.")
+        st.stop()
+    map_html, std_devs = get_map(MapTypes.Gauss, specific_id=special_id)
 
 with st.container():
     components.html(map_html, width=1000, height=1000)
+
+plt.figure()
+plt.plot(std_devs)
+plt.title('Uncertainty of Predictions')
+plt.xlabel('Index')
+plt.ylabel('Standard Deviation')
+st.pyplot(plt)
