@@ -1,4 +1,6 @@
 import json
+
+import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 import mapCreator
@@ -53,7 +55,7 @@ elif option == 'Map with Gauss':
     except ValueError:
         st.error("Please enter a valid integer for the special ID.")
         st.stop()
-    map_html, std_devs = get_map(MapTypes.Gauss, specific_id=special_id)
+    map_html, std_devs,stability_df = get_map(MapTypes.Gauss, specific_id=special_id)
 
 with st.container():
     components.html(map_html, width=1000, height=1000)
@@ -63,4 +65,25 @@ plt.plot(std_devs)
 plt.title('Uncertainty of Predictions')
 plt.xlabel('Index')
 plt.ylabel('Standard Deviation')
+st.pyplot(plt)
+
+plt.figure()
+
+# Plot the observed values
+observed = stability_df[stability_df['label'] == 'observed']
+plt.scatter(observed['index'], observed['stability'], color='blue')
+
+# Plot the predicted values
+predicted = stability_df[stability_df['label'] == 'predicted']
+plt.scatter(predicted['index'], predicted['stability'], color='orange')
+
+# Add a title and labels
+plt.title('Stability of Predictions')
+plt.xlabel('Index')
+plt.ylabel('Stability')
+
+# Add a legend
+plt.legend(['Observed', 'Predicted'])
+
+# Show the plot
 st.pyplot(plt)

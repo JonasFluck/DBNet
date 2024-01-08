@@ -309,5 +309,10 @@ def create_map_gauss(json_data, specific_id=None):
 
     # Convert the map to an HTML string
     map_html = m._repr_html_()
+    stability_df = pd.DataFrame({
+        'index': range(len(data)),
+        'stability': data['all_stability'],
+        'label': np.where(data['uncertainty'].isnull(), 'observed', 'predicted')
+    })
 
-    return map_html, std_devs
+    return map_html, std_devs, stability_df
