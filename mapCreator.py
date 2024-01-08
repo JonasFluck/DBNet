@@ -24,7 +24,7 @@ def create_map(json_data, map_type, target_id):
     elif map_type == MapTypes.Stability:
         return create_map_with_stability(json_data)
     elif map_type == MapTypes.Specific_ID:
-        return get_map_for_specific_id(json_data, target_id)
+        return get_map_for_multiple_ids(json_data, target_id)
     elif map_type == MapTypes.Gauss:
         return create_map_gauss(json_data, target_id)
     else:
@@ -137,23 +137,32 @@ def create_feature_id_gdf(json_data):
 
     return gdf
 
-def get_map_for_specific_id(json_data, target_id):
+
+def get_map_for_multiple_ids(json_data, target_ids):
     # Create a new Folium Map object
     m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
-               min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
-    # Create a GeoDataFrame from the filtered features for the target ID
-    gdf = load_data_by_id(create_feature_id_gdf(json_data), target_id)
-    # Create a map which only contains the data of the target_id in blue color
+                   min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
+
+    # Check if target_ids is already a list
+    if isinstance(target_ids, list):
+        # If it's a list, convert it to a string
+        target_ids = ','.join(map(str, target_ids))
+
+    # Convert the target_ids string to a list of integers
+    target_ids = [int(id.strip()) for id in target_ids.split(',')]
+
+    # Create a GeoDataFrame from the filtered features for the target IDs
+    gdf = pd.concat([load_data_by_id(create_feature_id_gdf(json_data), target_id) for target_id in target_ids])
+
     # Set the CRS
     gdf.set_crs(epsg=4326, inplace=True)
 
-    # Add the data
+    # Add the data with different colors for each ID
     color_dict = {id: get_random_color() for id in gdf['id'].unique()}
 
-    # Add the data
     folium.GeoJson(gdf,
                    style_function=lambda feature: {
-                       'color': 'blue',
+                       'color': color_dict[feature['properties']['id']],
                        'weight': 2,
                        'fillOpacity': 0.6
                    },
@@ -165,7 +174,6 @@ def get_map_for_specific_id(json_data, target_id):
                    ).add_to(m)
 
     return m._repr_html_()
-
 
 
 def create_map_knn(json_data):

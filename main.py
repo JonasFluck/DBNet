@@ -39,13 +39,17 @@ elif option == 'Map with knn':
 elif option == 'Map with stability':
     map_html = get_map(MapTypes.Stability)
 elif option == 'Map with special ID':
-    special_id = st.text_input("Enter Special ID", value='4')  # Default value is '4', you can change it
+    special_ids_input = st.text_input("Enter Special IDs (comma-separated)",
+                                      value='4,5,6')  # Default value is '4,5,6', you can change it
+    special_ids = [int(id.strip()) for id in special_ids_input.split(',')]
+
     try:
-        special_id = int(special_id)
-    except ValueError:
-        st.error("Please enter a valid integer for the special ID.")
+        if any(not isinstance(id, int) for id in special_ids):
+            raise ValueError("All IDs must be integers.")
+    except ValueError as e:
+        st.error(f"Error: {e}")
         st.stop()
-    map_html = get_map(MapTypes.Specific_ID, specific_id=special_id)
+    map_html = get_map(MapTypes.Specific_ID, specific_id=special_ids)
 elif option == 'Map with Gauss':
     special_id = st.text_input("Enter Special ID")  # Default value is '4', you can change it
     try:
