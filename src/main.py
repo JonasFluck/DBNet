@@ -1,6 +1,5 @@
 import json
 
-import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 import mapCreator
@@ -8,9 +7,12 @@ from MapTypes import MapTypes
 import matplotlib.pyplot as plt
 
 # Load the JSON data from a file
-with open('db.json') as f:
+with open('../data/db.json') as f:
     json_data = json.load(f)
 
+# declare here to not throw errors later
+std_devs = None
+stability_df = None
 
 # Create a Folium map centered at a specific location
 @st.cache_data
@@ -58,32 +60,33 @@ elif option == 'Map with Gauss':
     map_html, std_devs,stability_df = get_map(MapTypes.Gauss, specific_id=special_id)
 
 with st.container():
-    components.html(map_html, width=1000, height=1000)
+    components.html(map_html, height=500, width=900)
 
-plt.figure()
-plt.plot(std_devs)
-plt.title('Uncertainty of Predictions')
-plt.xlabel('Index')
-plt.ylabel('Standard Deviation')
-st.pyplot(plt)
+if std_devs is not None:
+    plt.figure()
+    plt.plot(std_devs)
+    plt.title('Uncertainty of Predictions')
+    plt.xlabel('Index')
+    plt.ylabel('Standard Deviation')
+    st.pyplot(plt)
 
-plt.figure()
+    plt.figure()
+if stability_df is not None:
+    # Plot the observed values
+    observed = stability_df[stability_df['label'] == 'observed']
+    plt.scatter(observed['index'], observed['stability'], color='blue')
 
-# Plot the observed values
-observed = stability_df[stability_df['label'] == 'observed']
-plt.scatter(observed['index'], observed['stability'], color='blue')
+    # Plot the predicted values
+    predicted = stability_df[stability_df['label'] == 'predicted']
+    plt.scatter(predicted['index'], predicted['stability'], color='orange')
 
-# Plot the predicted values
-predicted = stability_df[stability_df['label'] == 'predicted']
-plt.scatter(predicted['index'], predicted['stability'], color='orange')
+    # Add a title and labels
+    plt.title('Stability of Predictions')
+    plt.xlabel('Index')
+    plt.ylabel('Stability')
 
-# Add a title and labels
-plt.title('Stability of Predictions')
-plt.xlabel('Index')
-plt.ylabel('Stability')
+    # Add a legend
+    plt.legend(['Observed', 'Predicted'])
 
-# Add a legend
-plt.legend(['Observed', 'Predicted'])
-
-# Show the plot
-st.pyplot(plt)
+    # Show the plot
+    st.pyplot(plt)
