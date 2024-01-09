@@ -7,7 +7,7 @@ from MapTypes import MapTypes
 import matplotlib.pyplot as plt
 
 # Load the JSON data from a file
-with open('../data/db.json') as f:
+with open('./data/db.json') as f:
     json_data = json.load(f)
 
 # declare here to not throw errors later
