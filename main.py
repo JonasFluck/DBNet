@@ -28,7 +28,7 @@ def get_map(map_type, specific_id=None):
 # Create radio buttons in the sidebar
 option = st.sidebar.radio(
     'Select a map',
-    ('Map with id', 'Map with knn', 'Map with stability', 'Map with special ID', 'Map with Gauss'))
+    ('Map with id', 'Map with knn', 'Map with stability', 'Map with specific ID', 'Map with Gauss'))
 
 # Display a different map depending on the selected option
 if option == 'Map with id':
@@ -38,9 +38,9 @@ elif option == 'Map with knn':
     map_html = get_map(MapTypes.KNN)
 elif option == 'Map with stability':
     map_html = get_map(MapTypes.Stability)
-elif option == 'Map with special ID':
+elif option == 'Map with specific ID':
     special_ids_input = st.text_input("Enter Special IDs (comma-separated)",
-                                      value='4,5,6')  # Default value is '4,5,6', you can change it
+                                      value='27,16,320,69,76,72,71') #Default value
     special_ids = [int(id.strip()) for id in special_ids_input.split(',')]
 
     try:
@@ -51,20 +51,45 @@ elif option == 'Map with special ID':
         st.stop()
     map_html = get_map(MapTypes.Specific_ID, specific_id=special_ids)
 elif option == 'Map with Gauss':
-    special_id = st.text_input("Enter Special ID")  # Default value is '4', you can change it
+    special_ids_input = st.text_input("Enter Special IDs (comma-separated)",
+                                      value='27,16,320,69,76,72,71')  # Default value
+    special_ids = [int(id.strip()) for id in special_ids_input.split(',')]
     try:
-        special_id = int(special_id)
-    except ValueError:
-        st.error("Please enter a valid integer for the special ID.")
+        if any(not isinstance(id, int) for id in special_ids):
+            raise ValueError("All IDs must be integers.")
+    except ValueError as e:
+        st.error(f"Error: {e}")
         st.stop()
-    map_html, std_devs = get_map(MapTypes.Gauss, specific_id=special_id)
+    map_html, std_devs, stability_df = get_map(MapTypes.Gauss, specific_id=special_ids)
 
 with st.container():
-    components.html(map_html, width=1000, height=1000)
+    components.html(map_html, height=500, width=900)
 
-plt.figure()
-plt.plot(std_devs)
-plt.title('Uncertainty of Predictions')
-plt.xlabel('Index')
-plt.ylabel('Standard Deviation')
-st.pyplot(plt)
+if std_devs is not None:
+    plt.figure()
+    plt.plot(std_devs)
+    plt.title('Uncertainty of Predictions')
+    plt.xlabel('Index')
+    plt.ylabel('Standard Deviation')
+    st.pyplot(plt)
+
+    plt.figure()
+if stability_df is not None:
+    # Plot the observed values
+    observed = stability_df[stability_df['label'] == 'observed']
+    plt.scatter(observed['index'], observed['stability'], color='blue')
+
+    # Plot the predicted values
+    predicted = stability_df[stability_df['label'] == 'predicted']
+    plt.scatter(predicted['index'], predicted['stability'], color='orange')
+
+    # Add a title and labels
+    plt.title('Stability of Predictions')
+    plt.xlabel('Index')
+    plt.ylabel('Stability')
+
+    # Add a legend
+    plt.legend(['Observed', 'Predicted'])
+
+    # Show the plot
+    st.pyplot(plt)

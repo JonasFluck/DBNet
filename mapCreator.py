@@ -24,9 +24,9 @@ def create_map(json_data, map_type, target_id):
     elif map_type == MapTypes.Stability:
         return create_map_with_stability(json_data)
     elif map_type == MapTypes.Specific_ID:
-        return get_map_for_multiple_ids(json_data, target_id)
+        return create_map_for_multiple_ids(json_data, target_id)
     elif map_type == MapTypes.Gauss:
-        return create_map_gauss(json_data, target_id)
+        return create_map_for_multiple_ids_gauss(json_data, target_id)
     else:
         return create_map_with_id(json_data)
 
@@ -138,7 +138,7 @@ def create_feature_id_gdf(json_data):
     return gdf
 
 
-def get_map_for_multiple_ids(json_data, target_ids):
+def create_map_for_multiple_ids(json_data, target_ids):
     # Create a new Folium Map object
     m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
                    min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
@@ -267,6 +267,8 @@ def predict_missing_values(data):
     print(observations.count())
     print(missing.count())
 
+    data['uncertainty'] = None  # Initialize 'uncertainty' with a default value
+
     std_devs = None
     if len(observations) > 0 and len(missing) > 0:
         # Fit a Gaussian Process Regressor on the observed data
@@ -319,3 +321,57 @@ def create_map_gauss(json_data, specific_id=None):
     map_html = m._repr_html_()
 
     return map_html, std_devs
+
+def create_map_for_multiple_ids_gauss(json_data, target_ids):
+    # Create a new Folium Map object
+    m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
+                   min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
+
+    # Ensure target_ids is a list
+    if isinstance(target_ids, str):
+        # If it's a string, convert it to a list of integers
+        target_ids = [int(id.strip()) for id in target_ids.split(',')]
+    elif not isinstance(target_ids, list):
+        # If it's neither a string nor a list, raise an error
+        raise ValueError("Invalid input for target_ids. Please provide a string or a list of IDs.")
+
+    # Load the data by ids
+    data = load_data_by_ids(create_feature_id_gdf(json_data), target_ids)
+
+    # Predict the missing values
+    data, std_devs = predict_missing_values(data)
+
+    # Set the CRS
+    data.set_crs(epsg=4326, inplace=True)
+
+    # Add the data to the map
+    folium.GeoJson(data,
+                   style_function=lambda feature: {
+                       'color': cmap(feature['properties']['all_stability']) if not pd.isna(
+                           feature['properties']['all_stability']) else 'black',
+                       'weight': 2,
+                       'fillOpacity': 0.6
+                   },
+                   highlight_function=lambda feature: {
+                       'weight': 3,
+                       'fillOpacity': 0.6
+                   },
+                   tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id', 'uncertainty'])
+                   ).add_to(m)
+
+    # Convert the map to an HTML string
+    map_html = m._repr_html_()
+    stability_df = pd.DataFrame({
+        'index': range(len(data)),
+        'stability': data['all_stability'],
+        'label': np.where(data['uncertainty'].isnull(), 'observed', 'predicted')
+    })
+
+    return map_html, std_devs, stability_df
+
+
+def load_data_by_ids(gdf, ids):
+    return gdf[gdf['id'].isin(ids)]
+
+
+
