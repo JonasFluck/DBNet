@@ -7,7 +7,7 @@ from MapTypes import MapTypes
 import matplotlib.pyplot as plt
 
 # Load the JSON data from a file
-with open('../data/db.json') as f:
+with open('./data/db.json') as f:
     json_data = json.load(f)
 
 # declare here to not throw errors later
@@ -27,6 +27,8 @@ def get_map(map_type, specific_id=None):
         return mapCreator.create_map(json_data, MapTypes.Specific_ID, specific_id)
     elif map_type == MapTypes.Gauss:
         return mapCreator.create_map(json_data, MapTypes.Gauss, specific_id)
+    elif map_type == MapTypes.StabilityWithEmptyMeasures:
+        return mapCreator.create_map(json_data, MapTypes.StabilityWithEmptyMeasures, specific_id)
 
 
 # Create radio buttons in the sidebar
@@ -58,6 +60,12 @@ elif option == 'Map with Gauss':
         st.error("Please enter a valid integer for the special ID.")
         st.stop()
     map_html, std_devs,stability_df = get_map(MapTypes.Gauss, specific_id=special_id)
+
+# If "Stability" is selected, display a checkbox
+if option == "Map with stability":
+    checkbox_selected = st.checkbox("Show tracks with empty all_measurements")
+    if checkbox_selected:
+        map_html = get_map(MapTypes.StabilityWithEmptyMeasures, specific_id=checkbox_selected)
 
 with st.container():
     components.html(map_html, height=500, width=900)
