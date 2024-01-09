@@ -8,3 +8,4 @@ class MapTypes(Enum):
     ID = 2
     Stability = 3
     Specific_ID = 4
+    StabilityWithEmptyMeasures = 6

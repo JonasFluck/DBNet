@@ -27,6 +27,8 @@ def create_map(json_data, map_type, target_id):
         return create_map_for_multiple_ids(json_data, target_id)
     elif map_type == MapTypes.Gauss:
         return create_map_for_multiple_ids_gauss(json_data, target_id)
+    elif map_type == MapTypes.StabilityWithEmptyMeasures:
+        return create_map_stability_with_empty(json_data)
     else:
         return create_map_with_id(json_data)
 
@@ -319,8 +321,41 @@ def create_map_gauss(json_data, specific_id=None):
 
     # Convert the map to an HTML string
     map_html = m._repr_html_()
+    stability_df = pd.DataFrame({
+        'index': range(len(data)),
+        'stability': data['all_stability'],
+        'label': np.where(data['uncertainty'].isnull(), 'observed', 'predicted')
+    })
 
-    return map_html, std_devs
+    return map_html, std_devs, stability_df
+
+def create_map_stability_with_empty(json_data):
+    gdf = gpd.GeoDataFrame.from_features(json_data['features'])
+    gdf.reset_index(drop=True, inplace=True)
+    gdf.set_crs(epsg=4326, inplace=True)
+    # Convert the all_stability column to numeric values
+    gdf['all_stability'] = pd.to_numeric(gdf['all_stability'], errors='coerce')
+    m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
+                   min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
+    # Add the data
+    folium.GeoJson(gdf,
+                   style_function=lambda feature: {
+                       'color': 'purple' if feature['properties']['all_measurements'] == 0 else cmap(feature['properties']['all_stability']),
+                       'weight': 2,
+                       'fillOpacity': 0.6
+                   },
+                   highlight_function=lambda feature: {
+                       'weight': 3,
+                       'fillOpacity': 0.6
+                   },
+                   tooltip=folium.GeoJsonTooltip(fields=['all_stability'])
+                   ).add_to(m)
+
+    # Add the colormap to the map
+    cmap.add_to(m)
+
+    return m._repr_html_()
+
 
 def create_map_for_multiple_ids_gauss(json_data, target_ids):
     # Create a new Folium Map object
