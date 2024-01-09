@@ -6,22 +6,27 @@ import geopandas as gpd
 import folium
 from branca.colormap import LinearColormap
 import random
-from sklearn.neighbors import KNeighborsRegressor
 
+from shapely.geometry import Point, LineString
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.neighbors import KNeighborsRegressor
 from MapTypes import MapTypes
 
 cmap = LinearColormap(['red', 'yellow', 'green'], vmin=0, vmax=1)
-m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
-               min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
 
 
-def create_map(json_data, map_type):
+
+def create_map(json_data, map_type, target_id):
     if map_type == MapTypes.ID:
         return create_map_with_id(json_data)
     elif map_type == MapTypes.KNN:
         return create_map_knn(json_data)
     elif map_type == MapTypes.Stability:
         return create_map_with_stability(json_data)
+    elif map_type == MapTypes.Specific_ID:
+        return get_map_for_specific_id(json_data, target_id)
+    elif map_type == MapTypes.Gauss:
+        return create_map_gauss(json_data, target_id)
     else:
         return create_map_with_id(json_data)
 
@@ -38,6 +43,8 @@ def create_map_with_stability(json_data):
     gdf.set_crs(epsg=4326, inplace=True)
     # Convert the all_stability column to numeric values
     gdf['all_stability'] = pd.to_numeric(gdf['all_stability'], errors='coerce')
+    m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
+                   min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
     # Add the data
     folium.GeoJson(gdf,
                    style_function=lambda feature: {
@@ -85,6 +92,8 @@ def create_map_with_id(json_data):
 
     # Add the data
     color_dict = {id: get_random_color() for id in gdf['id'].unique()}
+    m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
+                   min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
 
     # Add the data
     folium.GeoJson(gdf,
@@ -101,6 +110,62 @@ def create_map_with_id(json_data):
                    ).add_to(m)
 
     return m._repr_html_()
+
+def create_feature_id_gdf(json_data):
+    # Initialize the id and the last coordinate
+    id = 0
+    last_coordinate = None
+
+    # Iterate over the features
+    for feature in json_data['features']:
+        # If the feature starts with the same coordinate as the last feature ended, assign the same id
+        if last_coordinate is not None and feature['geometry']['coordinates'][0] == last_coordinate:
+            feature['properties']['id'] = id
+        else:
+            # Otherwise, increment the id and assign it to the feature
+            id += 1
+            feature['properties']['id'] = id
+
+        # Update the last coordinate
+        last_coordinate = feature['geometry']['coordinates'][-1]
+
+    # Convert the JSON data to a GeoDataFrame
+    gdf = gpd.GeoDataFrame.from_features(json_data['features'])
+
+    # Set the CRS
+    gdf.set_crs(epsg=4326, inplace=True)
+
+    return gdf
+
+def get_map_for_specific_id(json_data, target_id):
+    # Create a new Folium Map object
+    m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
+               min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
+    # Create a GeoDataFrame from the filtered features for the target ID
+    gdf = load_data_by_id(create_feature_id_gdf(json_data), target_id)
+    # Create a map which only contains the data of the target_id in blue color
+    # Set the CRS
+    gdf.set_crs(epsg=4326, inplace=True)
+
+    # Add the data
+    color_dict = {id: get_random_color() for id in gdf['id'].unique()}
+
+    # Add the data
+    folium.GeoJson(gdf,
+                   style_function=lambda feature: {
+                       'color': 'blue',
+                       'weight': 2,
+                       'fillOpacity': 0.6
+                   },
+                   highlight_function=lambda feature: {
+                       'weight': 3,
+                       'fillOpacity': 0.6
+                   },
+                   tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id'])
+                   ).add_to(m)
+
+    return m._repr_html_()
+
 
 
 def create_map_knn(json_data):
@@ -136,6 +201,8 @@ def create_map_knn(json_data):
 
     # Assign the predicted values to the 'all_stability' column of the test data
     gdf.loc[test_data.index, 'all_stability'] = y_pred
+    m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
+                   min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
 
     # Add the actual measurements to the map
     folium.GeoJson(gdf[gdf['all_measurements'] != 0],
@@ -171,3 +238,81 @@ def create_map_knn(json_data):
     # Add the colormap to the map
     cmap.add_to(m)
     return m._repr_html_()
+
+def load_data_by_id(gdf, id):
+    return gdf[gdf['id'] == id]
+
+
+
+def predict_missing_values(data):
+    # Extract the coordinates from the geometry
+    data['coordinates'] = data['geometry'].apply(lambda geom: list(geom.coords) if isinstance(geom, LineString) else [geom.coords[0]])
+
+
+    # Extract the lat and lon values
+    data['lon'] = data['coordinates'].apply(lambda coords: coords[0][0])
+    data['lat'] = data['coordinates'].apply(lambda coords: coords[0][1])
+
+    # Separate data into observations and missing values
+    observations = data[data['all_measurements']!=0]
+    missing = data[data['all_measurements']==0]
+    print(observations.count())
+    print(missing.count())
+
+    std_devs = None
+    if len(observations) > 0 and len(missing) > 0:
+        # Fit a Gaussian Process Regressor on the observed data
+        X_train = observations[['lat', 'lon']]
+        y_train = observations['all_stability']
+        gpr = GaussianProcessRegressor().fit(X_train, y_train)
+
+        # Predict the missing values and get standard deviations
+        X_test = missing[['lat', 'lon']]
+        y_pred, std_devs = gpr.predict(X_test, return_std=True)
+
+        y_pred = np.clip(y_pred, 0, 1)
+        data['all_stability'] = data['all_stability'].astype(float)
+
+        # Fill in the missing values
+        data.loc[missing.index, 'all_stability'] = y_pred
+        data.loc[missing.index, 'uncertainty'] = std_devs
+        m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
+                       min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
+
+    return data, std_devs
+
+def create_map_gauss(json_data, specific_id=None):
+    # Your existing code to create the map...
+
+    # Load the data by id
+    data = load_data_by_id(create_feature_id_gdf(json_data), specific_id)
+
+    # Predict the missing values
+    data, std_devs = predict_missing_values(data)
+    m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
+                   min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
+
+    # Add the data to the map
+    folium.GeoJson(data,
+                    style_function=lambda feature: {
+                        'color': cmap(feature['properties']['all_stability']) if not pd.isna(
+                        feature['properties']['all_stability']) else 'black',
+                        'weight': 2,
+                        'fillOpacity': 0.6
+                    },
+                    highlight_function=lambda feature: {
+                        'weight': 3,
+                        'fillOpacity': 0.6
+                    },
+                    tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id','uncertainty'])
+                    ).add_to(m)
+
+    # Convert the map to an HTML string
+    map_html = m._repr_html_()
+    stability_df = pd.DataFrame({
+        'index': range(len(data)),
+        'stability': data['all_stability'],
+        'label': np.where(data['uncertainty'].isnull(), 'observed', 'predicted')
+    })
+
+    return map_html, std_devs, stability_df
