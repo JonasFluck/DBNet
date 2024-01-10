@@ -412,11 +412,11 @@ def avg_for_provider(df):
     # Initialize the dictionary
     avg_providers = {'vodafone': None, 't-mobile': None, 'e-plus': None, 'o2': None}
 
-    # Calculate the average stability for each provider
-    avg_providers['vodafone'] = df['vodafone_stability'].mean()
-    avg_providers['t-mobile'] = df['t-mobile_stability'].mean()
-    avg_providers['e-plus'] = df['e-plus_stability'].mean()
-    avg_providers['o2'] = df['o2_stability'].mean()
+    # Calculate the sum for each provider where measurements are not 0
+    avg_providers['vodafone'] = df[df['vodafone_measurements'] != 0]['vodafone_stability'].mean()
+    avg_providers['t-mobile'] = df[df['t-mobile_measurements'] != 0]['t-mobile_stability'].mean()
+    avg_providers['e-plus'] = df[df['e-plus_measurements'] != 0]['e-plus_stability'].mean()
+    avg_providers['o2'] = df[df['o2_measurements'] != 0]['o2_stability'].mean()
 
     return avg_providers
 
