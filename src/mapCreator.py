@@ -65,7 +65,7 @@ def create_map_with_stability(json_data):
     # Add the colormap to the map
     cmap.add_to(m)
 
-    return m._repr_html_()
+    return m._repr_html_(), avg_for_provider(gdf)
 
 
 def create_map_with_id(json_data):
@@ -111,7 +111,7 @@ def create_map_with_id(json_data):
                    tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id'])
                    ).add_to(m)
 
-    return m._repr_html_()
+    return m._repr_html_(), avg_for_provider(gdf)
 
 def create_feature_id_gdf(json_data):
     # Initialize the id and the last coordinate
@@ -175,7 +175,7 @@ def create_map_for_multiple_ids(json_data, target_ids):
                    tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id'])
                    ).add_to(m)
 
-    return m._repr_html_()
+    return m._repr_html_(), avg_for_provider(gdf)
 
 
 def create_map_knn(json_data):
@@ -247,7 +247,7 @@ def create_map_knn(json_data):
 
     # Add the colormap to the map
     cmap.add_to(m)
-    return m._repr_html_()
+    return m._repr_html_(), avg_for_provider(gdf)
 
 def load_data_by_id(gdf, id):
     return gdf[gdf['id'] == id]
@@ -291,7 +291,7 @@ def predict_missing_values(data):
         m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
                        min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
 
-    return data, std_devs
+    return data, std_devs,
 
 def create_map_gauss(json_data, specific_id=None):
     # Your existing code to create the map...
@@ -327,7 +327,7 @@ def create_map_gauss(json_data, specific_id=None):
         'label': np.where(data['uncertainty'].isnull(), 'observed', 'predicted')
     })
 
-    return map_html, std_devs, stability_df
+    return map_html, std_devs, stability_df, avg_for_provider(data)
 
 def create_map_stability_with_empty(json_data):
     gdf = gpd.GeoDataFrame.from_features(json_data['features'])
@@ -354,7 +354,7 @@ def create_map_stability_with_empty(json_data):
     # Add the colormap to the map
     cmap.add_to(m)
 
-    return m._repr_html_()
+    return m._repr_html_(), avg_for_provider(gdf)
 
 
 def create_map_for_multiple_ids_gauss(json_data, target_ids):
@@ -402,11 +402,24 @@ def create_map_for_multiple_ids_gauss(json_data, target_ids):
         'label': np.where(data['uncertainty'].isnull(), 'observed', 'predicted')
     })
 
-    return map_html, std_devs, stability_df
+    return map_html, std_devs, stability_df, avg_for_provider(data)
 
 
 def load_data_by_ids(gdf, ids):
     return gdf[gdf['id'].isin(ids)]
 
+def avg_for_provider(df):
+    # Initialize the dictionary
+    avg_providers = {'all': None, 'prediction': None, 'allWithPrediction': None, 'vodafone': None, 't-mobile': None, 'e-plus': None, 'o2': None}
 
+    # Calculate the sum for each provider where measurements are not 0
+    avg_providers['all'] = df[df['all_measurements'] != 0]['all_stability'].mean()
+    avg_providers['prediction'] = df[df['all_measurements'] == 0]['all_stability'].mean()
+    avg_providers['allWithPrediction'] = df['all_stability'].mean()
+    avg_providers['vodafone'] = df[df['vodafone_measurements'] != 0]['vodafone_stability'].mean()
+    avg_providers['t-mobile'] = df[df['t-mobile_measurements'] != 0]['t-mobile_stability'].mean()
+    avg_providers['e-plus'] = df[df['e-plus_measurements'] != 0]['e-plus_stability'].mean()
+    avg_providers['o2'] = df[df['o2_measurements'] != 0]['o2_stability'].mean()
+
+    return avg_providers
 

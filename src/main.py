@@ -37,12 +37,12 @@ option = st.sidebar.radio(
 
 # Display a different map depending on the selected option
 if option == 'Map with id':
-    map_html = get_map(MapTypes.ID)
+    map_html, providers = get_map(MapTypes.ID)
 elif option == 'Map with knn':
     # Replace with your own code to create a different map
-    map_html = get_map(MapTypes.KNN)
+    map_html, providers = get_map(MapTypes.KNN)
 elif option == 'Map with stability':
-    map_html = get_map(MapTypes.Stability)
+    map_html, providers = get_map(MapTypes.Stability)
 elif option == 'Map with specific ID':
     special_ids_input = st.text_input("Enter Special IDs (comma-separated)",
                                       value='27,16,320,69,76,72,71') #Default value
@@ -54,7 +54,7 @@ elif option == 'Map with specific ID':
     except ValueError as e:
         st.error(f"Error: {e}")
         st.stop()
-    map_html = get_map(MapTypes.Specific_ID, specific_id=special_ids)
+    map_html, providers = get_map(MapTypes.Specific_ID, specific_id=special_ids)
 elif option == 'Map with Gauss':
     special_ids_input = st.text_input("Enter Special IDs (comma-separated)",
                                       value='27,16,320,69,76,72,71')  # Default value
@@ -65,17 +65,19 @@ elif option == 'Map with Gauss':
     except ValueError as e:
         st.error(f"Error: {e}")
         st.stop()
-    map_html, std_devs,stability_df = get_map(MapTypes.Gauss, specific_id=special_ids)
+    map_html, std_devs,stability_df, providers = get_map(MapTypes.Gauss, specific_id=special_ids)
 
 # If "Stability" is selected, display a checkbox
 if option == "Map with stability":
     checkbox_selected = st.checkbox("Show tracks with empty all_measurements")
     if checkbox_selected:
-        map_html = get_map(MapTypes.StabilityWithEmptyMeasures, specific_id=checkbox_selected)
+        map_html, providers = get_map(MapTypes.StabilityWithEmptyMeasures, specific_id=checkbox_selected)
 
 with st.container():
     components.html(map_html, height=500, width=900)
-
+# Assuming providers is your dictionary
+for provider, average in providers.items():
+    st.write(f"The average stability for {provider} is: {format(average, '.2f')}")
 if std_devs is not None:
     plt.figure()
     plt.plot(std_devs)
