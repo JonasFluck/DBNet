@@ -410,9 +410,12 @@ def load_data_by_ids(gdf, ids):
 
 def avg_for_provider(df):
     # Initialize the dictionary
-    avg_providers = {'vodafone': None, 't-mobile': None, 'e-plus': None, 'o2': None}
+    avg_providers = {'all': None, 'prediction': None, 'allWithPrediction': None, 'vodafone': None, 't-mobile': None, 'e-plus': None, 'o2': None}
 
     # Calculate the sum for each provider where measurements are not 0
+    avg_providers['all'] = df[df['all_measurements'] != 0]['all_stability'].mean()
+    avg_providers['prediction'] = df[df['all_measurements'] == 0]['all_stability'].mean()
+    avg_providers['allWithPrediction'] = df['all_stability'].mean()
     avg_providers['vodafone'] = df[df['vodafone_measurements'] != 0]['vodafone_stability'].mean()
     avg_providers['t-mobile'] = df[df['t-mobile_measurements'] != 0]['t-mobile_stability'].mean()
     avg_providers['e-plus'] = df[df['e-plus_measurements'] != 0]['e-plus_stability'].mean()
