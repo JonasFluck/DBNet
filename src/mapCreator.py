@@ -15,21 +15,17 @@ from MapTypes import MapTypes
 
 cmap = LinearColormap(['red', 'yellow', 'green'], vmin=0, vmax=1)
 
-def create_map(json_data, map_type, target_id):
-    if map_type == MapTypes.ID:
-        return create_map_with_id(json_data)
-    elif map_type == MapTypes.KNN:
-        return create_map_knn(json_data)
+def create_map(gdf, map_type):
+    if map_type == MapTypes.KNN:
+        return create_map_knn(gdf)
     elif map_type == MapTypes.Stability:
-        return create_map_with_stability(json_data)
-    elif map_type == MapTypes.Specific_ID:
-        return create_map_for_multiple_ids(json_data, target_id)
+        return create_map_with_stability(gdf)
+    elif map_type == MapTypes.Specific_ID or MapTypes.ID:
+        return create_map_with_ids_new(gdf)
     elif map_type == MapTypes.Gauss:
-        return create_map_for_multiple_ids_gauss(json_data, target_id)
+        return create_map_for_multiple_ids_gauss(gdf)
     elif map_type == MapTypes.StabilityWithEmptyMeasures:
-        return create_map_stability_with_empty(json_data)
-    else:
-        return create_map_with_id(json_data)
+        return create_map_stability_with_empty(gdf)
 
 
 def get_random_color():
