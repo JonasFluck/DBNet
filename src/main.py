@@ -214,7 +214,7 @@ if stability_df is not None:
         plt.fill_between(X_pred_filtered, y_pred_filtered - z * y_std_filtered, y_pred_filtered + z * y_std_filtered, alpha=0.2/(i+1), color='lightgreen', label=f'{conf}% Confidence Interval')
 
     # Set the limits of the x-axis
-    plt.xlim(65, 261)
+    plt.xlim(0, 150)
 
     # Add a title and labels
     plt.title('Filtered Prediction and Confidence Intervals')
@@ -226,4 +226,5 @@ if stability_df is not None:
 
     # Show the plot
     st.pyplot(plt)
-    
+        # Create a new plot
+   

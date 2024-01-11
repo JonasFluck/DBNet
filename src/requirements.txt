@@ -3,3 +3,5 @@ numpy
 geopandas
 folium
 scikit-learn
+seaborn
+scipy.stats
