@@ -201,7 +201,6 @@ if stability_df is not None:
 
     # Calculate the standard deviation of the filtered predicted stability values, adjusted by the distance to the nearest observed value
     y_std_filtered = np.std(predicted_filtered['stability'].values) * distances
-
     # Create a new plot
     plt.figure()
 
@@ -213,8 +212,11 @@ if stability_df is not None:
         z = scipy.stats.norm.ppf((1 + conf/100) / 2)
         plt.fill_between(X_pred_filtered, y_pred_filtered - z * y_std_filtered, y_pred_filtered + z * y_std_filtered, alpha=0.2/(i+1), color='lightgreen', label=f'{conf}% Confidence Interval')
 
-    # Set the limits of the x-axis
-    plt.xlim(0, 150)
+    # Set the limits of the x-axis based on the data
+    plt.xlim(X_pred_filtered.min(), X_pred_filtered.max())
+
+    # Set the limits of the y-axis based on the data
+    plt.ylim(y_pred_filtered.min() - y_std_filtered.max(), y_pred_filtered.max() + y_std_filtered.max())
 
     # Add a title and labels
     plt.title('Filtered Prediction and Confidence Intervals')
@@ -226,5 +228,3 @@ if stability_df is not None:
 
     # Show the plot
     st.pyplot(plt)
-        # Create a new plot
-   
