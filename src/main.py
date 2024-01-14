@@ -113,6 +113,11 @@ if stability_df is not None:
 
     # Flatten X for use with fill_between
     X_pred_flat = X_pred.flatten()
+    
+    for zahl in range(1, 1001):
+        numbers = ','.join(str(zahl) for zahl in range(1, 1001))
+        st.write(numbers)
+
 
     # Get the predicted stability values and standard deviation
     y_pred = predicted['stability'].values
@@ -131,7 +136,7 @@ if stability_df is not None:
     for i, conf in enumerate([90, 95]):
         z = scipy.stats.norm.ppf((1 + conf/100) / 2)
         plt.fill_between(X_pred_flat, y_pred - z * y_std, y_pred + z * y_std, alpha=0.2/(i+1), color='lightgreen', label=f'{conf}% Confidence Interval')
-
+        st.write(stability_df)
     plt.xlim(61, 261)
     # Add a title and labels
     plt.title('Mean Prediction and Confidence Intervals')

@@ -358,7 +358,7 @@ def create_map_stability_with_empty(json_data):
 
 
 def create_map_for_multiple_ids_gauss(json_data, target_ids):
-    json_data = filter_data_by_geometry(json_data)
+    json_data = filter_data_by_geometry(json_data,0)
     # Create a new Folium Map object
     m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
                    min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
@@ -406,13 +406,13 @@ def create_map_for_multiple_ids_gauss(json_data, target_ids):
     return map_html, std_devs, stability_df, avg_for_provider(data)
 
 
-def filter_data_by_geometry(json_data):
+def filter_data_by_geometry(json_data, statenumber):
     # Load the GeoJSON file
     with open('./data/2_hoch.geo.json') as f:
         data = json.load(f)
 
     # Filter the features to keep only the one with the ID 0
-    data['features'] = [feature for feature in data['features'] if feature['id'] == 0]
+    data['features'] = [feature for feature in data['features'] if feature['id'] == statenumber]
 
     # Check if there is a feature with the ID 0
     if not data['features']:
