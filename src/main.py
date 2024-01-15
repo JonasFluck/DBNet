@@ -1,34 +1,18 @@
 import json
 import streamlit as st
 import streamlit.components.v1 as components
-import mapCreator
-from MapTypes import MapTypes
 import matplotlib.pyplot as plt
+import pandas as pd
+
+from mainController import MainController
+from MapTypes import MapTypes
 
 # Load the JSON data from a file
 with open('./data/db.json') as f:
     json_data = json.load(f)
 
 # declare here to not throw errors later
-std_devs = None
-stability_df = None
-
-# Create a Folium map centered at a specific location
-@st.cache_data
-def get_map(map_type, specific_id=None):
-    if map_type == MapTypes.ID:
-        return mapCreator.create_map(json_data, MapTypes.ID, specific_id)
-    elif map_type == MapTypes.KNN:
-        return mapCreator.create_map(json_data, MapTypes.KNN, specific_id)
-    elif map_type == MapTypes.Stability:
-        return mapCreator.create_map(json_data, MapTypes.Stability, specific_id)
-    elif map_type == MapTypes.Specific_ID:
-        return mapCreator.create_map(json_data, MapTypes.Specific_ID, specific_id)
-    elif map_type == MapTypes.Gauss:
-        return mapCreator.create_map(json_data, MapTypes.Gauss, specific_id)
-    elif map_type == MapTypes.StabilityWithEmptyMeasures:
-        return mapCreator.create_map(json_data, MapTypes.StabilityWithEmptyMeasures, specific_id)
-
+mainController = MainController()
 
 # Create radio buttons in the sidebar
 option = st.sidebar.radio(
@@ -37,12 +21,12 @@ option = st.sidebar.radio(
 
 # Display a different map depending on the selected option
 if option == 'Map with id':
-    map_html, providers = get_map(MapTypes.ID)
+    mainController.setData(json_data,MapTypes.ID) 
 elif option == 'Map with knn':
     # Replace with your own code to create a different map
-    map_html, providers = get_map(MapTypes.KNN)
+    mainController.setData(json_data,MapTypes.KNN)
 elif option == 'Map with stability':
-    map_html, providers = get_map(MapTypes.Stability)
+    mainController.setData(json_data,MapTypes.Stability)
 elif option == 'Map with specific ID':
     special_ids_input = st.text_input("Enter Special IDs (comma-separated)",
                                       value='27,16,320,69,76,72,71') #Default value
@@ -54,7 +38,7 @@ elif option == 'Map with specific ID':
     except ValueError as e:
         st.error(f"Error: {e}")
         st.stop()
-    map_html, providers = get_map(MapTypes.Specific_ID, specific_id=special_ids)
+    mainController.setData(json_data,MapTypes.ID, special_ids)
 elif option == 'Map with Gauss':
     special_ids_input = st.text_input("Enter Special IDs (comma-separated)",
                                       value='27,16,320,69,76,72,71')  # Default value
@@ -65,44 +49,42 @@ elif option == 'Map with Gauss':
     except ValueError as e:
         st.error(f"Error: {e}")
         st.stop()
-    map_html, std_devs,stability_df, providers = get_map(MapTypes.Gauss, specific_id=special_ids)
+    mainController.setData(json_data,MapTypes.Gauss, special_ids)
 
 # If "Stability" is selected, display a checkbox
 if option == "Map with stability":
     checkbox_selected = st.checkbox("Show tracks with empty all_measurements")
     if checkbox_selected:
-        map_html, providers = get_map(MapTypes.StabilityWithEmptyMeasures, specific_id=checkbox_selected)
+        mainController.setData(json_data,MapTypes.StabilityWithEmptyMeasures)
 
 with st.container():
-    components.html(map_html, height=500, width=900)
-# Assuming providers is your dictionary
-for provider, average in providers.items():
+    components.html(mainController.map, height=500, width=900)
+
+for provider, average in mainController.dto.avg_providers.items():
     st.write(f"The average stability for {provider} is: {format(average, '.2f')}")
-if std_devs is not None:
+
+if 'uncertainty' in mainController.dto.gdf.columns:
+    # Plot of the datapoints differentiated by whether they were observed or predicted
+    observed = mainController.dto.gdf[mainController.dto.gdf['uncertainty'].isnull()]
+    predicted = mainController.dto.gdf[mainController.dto.gdf['uncertainty'].isnull()==False]
+    data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
+
     plt.figure()
-    plt.plot(std_devs)
+    plt.scatter(data[data['uncertainty'].isnull()].index, data[data['uncertainty'].isnull()]['all_stability'], color='blue', label='Observed')
+    plt.scatter(data[data['uncertainty'].notnull()].index, data[data['uncertainty'].notnull()]['all_stability'], color='orange', label='Predicted')
+    plt.title('Stability of Predictions')
+    plt.xlabel('Index')
+    plt.ylabel('Stability')
+    plt.legend(['Observed', 'Predicted'])
+
+    st.pyplot(plt)
+
+    #Plot the uncertainty of the predictions
+    plt.figure()
+    plt.plot(mainController.dto.gdf['uncertainty'])
     plt.title('Uncertainty of Predictions')
     plt.xlabel('Index')
     plt.ylabel('Standard Deviation')
     st.pyplot(plt)
 
-    plt.figure()
-if stability_df is not None:
-    # Plot the observed values
-    observed = stability_df[stability_df['label'] == 'observed']
-    plt.scatter(observed['index'], observed['stability'], color='blue')
-
-    # Plot the predicted values
-    predicted = stability_df[stability_df['label'] == 'predicted']
-    plt.scatter(predicted['index'], predicted['stability'], color='orange')
-
-    # Add a title and labels
-    plt.title('Stability of Predictions')
-    plt.xlabel('Index')
-    plt.ylabel('Stability')
-
-    # Add a legend
-    plt.legend(['Observed', 'Predicted'])
-
-    # Show the plot
-    st.pyplot(plt)
+    

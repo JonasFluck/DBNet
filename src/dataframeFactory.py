@@ -22,6 +22,7 @@ def get_data_frame(json_data, ids = None):
 
     # Set the CRS
     gdf.set_crs(epsg=4326, inplace=True)
+    
 
     if(ids == None):
         return gdf
