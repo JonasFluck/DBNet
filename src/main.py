@@ -4,12 +4,26 @@ import streamlit.components.v1 as components
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from mapCreator import filter_data_by_geometry
 from mainController import MainController
 from MapTypes import MapTypes
 
 # Load the JSON data from a file
 with open('./data/db.json') as f:
     json_data = json.load(f)
+
+bundeslaender = ['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thüringen']
+
+# Create a dictionary that maps each state to a unique ID
+bundesland_to_id = {bundesland: i for i, bundesland in enumerate(bundeslaender)}
+
+ausgewaehltes_bundesland = st.radio("Wählen Sie ein Bundesland aus:", bundeslaender)
+
+# Get the ID of the selected state
+ausgewaehltes_bundesland_id = bundesland_to_id[ausgewaehltes_bundesland]
+
+json_data = filter_data_by_geometry(json_data, ausgewaehltes_bundesland_id)
+
 
 # declare here to not throw errors later
 mainController = MainController()
