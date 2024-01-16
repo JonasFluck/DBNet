@@ -27,7 +27,7 @@ class MainController:
         self._mapType = mapType
         
         if(mapType == MapTypes.Gauss):
-            self._dto = DataDto(add_predictions_gauss_regr(get_data_frame(json_data)))
+            self._dto = DataDto(add_predictions_gauss_regr(get_data_frame(json_data, ids)))
         elif(mapType == MapTypes.KNN):
             self._dto = DataDto(add_predictions_knn(get_data_frame(json_data, ids)))
         else:
