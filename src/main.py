@@ -3,10 +3,14 @@ import streamlit as st
 import streamlit.components.v1 as components
 import matplotlib.pyplot as plt
 import pandas as pd
-
+import numpy as np
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+import scipy.stats  
 from mapCreator import filter_data_by_geometry
 from mainController import MainController
 from MapTypes import MapTypes
+from scipy.interpolate import UnivariateSpline
 
 # Load the JSON data from a file
 with open('./data/db.json') as f:
@@ -17,12 +21,13 @@ bundeslaender = ['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Breme
 # Create a dictionary that maps each state to a unique ID
 bundesland_to_id = {bundesland: i for i, bundesland in enumerate(bundeslaender)}
 
-ausgewaehltes_bundesland = st.radio("Wählen Sie ein Bundesland aus:", bundeslaender)
 
-# Get the ID of the selected state
-ausgewaehltes_bundesland_id = bundesland_to_id[ausgewaehltes_bundesland]
+choosen_states = st.multiselect("Choose a country state:", bundeslaender, default=["Baden-Württemberg"])
 
-json_data = filter_data_by_geometry(json_data, ausgewaehltes_bundesland_id)
+# Get the IDs of the selected states
+choosen_states_ids = [bundesland_to_id[bundesland] for bundesland in choosen_states]
+
+json_data = filter_data_by_geometry(json_data, choosen_states_ids)
 
 
 # declare here to not throw errors later
@@ -54,16 +59,8 @@ elif option == 'Map with specific ID':
         st.stop()
     mainController.setData(json_data,MapTypes.ID, special_ids)
 elif option == 'Map with Gauss':
-    special_ids_input = st.text_input("Enter Special IDs (comma-separated)",
-                                      value='27,16,320,69,76,72,71')  # Default value
-    special_ids = [int(id.strip()) for id in special_ids_input.split(',')]
-    try:
-        if any(not isinstance(id, int) for id in special_ids):
-            raise ValueError("All IDs must be integers.")
-    except ValueError as e:
-        st.error(f"Error: {e}")
-        st.stop()
-    mainController.setData(json_data,MapTypes.Gauss, special_ids)
+   
+    mainController.setData(json_data,MapTypes.Gauss)
 
 # If "Stability" is selected, display a checkbox
 if option == "Map with stability":
@@ -93,12 +90,3 @@ if 'uncertainty' in mainController.dto.gdf.columns:
 
     st.pyplot(plt)
 
-    #Plot the uncertainty of the predictions
-    plt.figure()
-    plt.plot(mainController.dto.gdf['uncertainty'])
-    plt.title('Uncertainty of Predictions')
-    plt.xlabel('Index')
-    plt.ylabel('Standard Deviation')
-    st.pyplot(plt)
-
-    

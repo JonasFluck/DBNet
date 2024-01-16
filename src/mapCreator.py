@@ -159,26 +159,32 @@ def create_map_for_gauss(gdf):
     return m._repr_html_()
 
 
-def filter_data_by_geometry(json_data, statenumber):
+def filter_data_by_geometry(json_data, statenumbers):
     # Load the GeoJSON file
     with open('./data/2_hoch.geo.json') as f:
         data = json.load(f)
 
-    # Filter the features to keep only the one with the ID 0
-    data['features'] = [feature for feature in data['features'] if feature['id'] == statenumber]
+    filtered_features = []
 
-    # Check if there is a feature with the ID 0
-    if not data['features']:
-        raise ValueError("No feature with the ID 0 found")
+    for statenumber in statenumbers:
+        # Filter the features to keep only the ones with the current ID
+        current_features = [feature for feature in data['features'] if feature['id'] == statenumber]
 
-    # Get the geometry of the first feature
-    geometry = data['features'][0]['geometry']
+        # Check if there is a feature with the current ID
+        if not current_features:
+            raise ValueError(f"No feature with the ID {statenumber} found")
 
-    # Create a shapely shape from the geometry
-    shape_geometry = shape(geometry)
+        # Get the geometry of the first feature
+        geometry = current_features[0]['geometry']
 
-    # Filter json_data to keep only the features that intersect with the shape_geometry
-    json_data['features'] = [feature for feature in json_data['features'] if shape_geometry.intersects(LineString(feature['geometry']['coordinates']))]
+        # Create a shapely shape from the geometry
+        shape_geometry = shape(geometry)
+
+        # Filter json_data to keep only the features that intersect with the shape_geometry
+        filtered_features.extend([feature for feature in json_data['features'] if shape_geometry.intersects(LineString(feature['geometry']['coordinates']))])
+
+    # Replace the features in json_data with the filtered features
+    json_data['features'] = filtered_features
 
     return json_data
 
