@@ -69,6 +69,22 @@ if option == "Map with stability":
 
 with st.container():
     components.html(mainController.map, height=500, width=900)
+attributes = ['t-mobile', 'vodafone', 'o2', 'e-plus']
+colors = ['blue', 'orange', 'green', 'purple']  # Specify as many colors as attributes
+
+fig, axs = plt.subplots(2, 2, figsize=(20, 20))  # Create 2 subplots side by side
+
+for i, (attr, color) in enumerate(zip(attributes, colors)):
+    filtered = mainController.dto.gdf[(mainController.dto.gdf[attr+'_measurements']!=0)]
+    axs[i // 2, i % 2].plot(filtered.index, filtered[attr+'_stability'], marker='o', markersize=4, label=attr, color=color)
+    axs[i // 2, i % 2].set_title('Network stability of ' + attr)
+    axs[i // 2, i % 2].set_xlabel('Index of track')
+    axs[i // 2, i % 2].set_ylabel('Stability')
+    axs[i // 2, i % 2].legend()
+    axs[i // 2, i % 2].margins(x=0.05)
+
+plt.tight_layout()
+st.pyplot(fig)
 
 for provider, average in mainController.dto.avg_providers.items():
     st.write(f"The average stability for {provider} is: {format(average, '.2f')}")
@@ -79,13 +95,19 @@ if 'uncertainty' in mainController.dto.gdf.columns:
     predicted = mainController.dto.gdf[mainController.dto.gdf['uncertainty'].isnull()==False]
     data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
 
-    plt.figure()
-    plt.scatter(data[data['uncertainty'].isnull()].index, data[data['uncertainty'].isnull()]['all_stability'], color='blue', label='Observed')
-    plt.scatter(data[data['uncertainty'].notnull()].index, data[data['uncertainty'].notnull()]['all_stability'], color='orange', label='Predicted')
+    plt.figure(figsize=(10, 5))
+    plt.scatter(data[data['uncertainty'].isnull()].index, data[data['uncertainty'].isnull()]['all_stability'], color='blue', label='Observed', s=3)
+    plt.scatter(data[data['uncertainty'].notnull()].index, data[data['uncertainty'].notnull()]['all_stability'], color='orange', label='Predicted', s=3)
+    
+    
     plt.title('Stability of Predictions')
     plt.xlabel('Index')
     plt.ylabel('Stability')
     plt.legend(['Observed', 'Predicted'])
+    plt.margins(x=0.05)
 
     st.pyplot(plt)
+
+   
+
 
