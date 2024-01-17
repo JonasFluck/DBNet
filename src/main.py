@@ -112,8 +112,8 @@ if 'uncertainty' in mainController.dto.gdf.columns:
 # User selects states from the multiselect dropdown
 # Get the IDs of the selected states
    # Filter the data to keep only the rows that belong to the selected states
-observed = mainController.dto.gdf[(mainController.dto.gdf['uncertainty'].isnull()) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
-predicted = mainController.dto.gdf[(mainController.dto.gdf['uncertainty'].isnull()==False) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
 
 # Calculate the average stability for each state for observed and predicted data
 average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
