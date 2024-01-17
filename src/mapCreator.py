@@ -1,7 +1,9 @@
 import pandas as pd
 import folium
 import random
+import json
 
+from shapely.geometry import shape, Point, LineString
 from branca.colormap import LinearColormap
 from MapTypes import MapTypes
 
@@ -157,4 +159,32 @@ def create_map_for_gauss(gdf):
     return m._repr_html_()
 
 
+def filter_data_by_geometry(json_data, statenumbers):
+    # Load the GeoJSON file
+    with open('./data/2_hoch.geo.json') as f:
+        data = json.load(f)
+
+    filtered_features = []
+
+    for statenumber in statenumbers:
+        # Filter the features to keep only the ones with the current ID
+        current_features = [feature for feature in data['features'] if feature['id'] == statenumber]
+
+        # Check if there is a feature with the current ID
+        if not current_features:
+            raise ValueError(f"No feature with the ID {statenumber} found")
+
+        # Get the geometry of the first feature
+        geometry = current_features[0]['geometry']
+
+        # Create a shapely shape from the geometry
+        shape_geometry = shape(geometry)
+
+        # Filter json_data to keep only the features that intersect with the shape_geometry
+        filtered_features.extend([feature for feature in json_data['features'] if shape_geometry.intersects(LineString(feature['geometry']['coordinates']))])
+
+    # Replace the features in json_data with the filtered features
+    json_data['features'] = filtered_features
+
+    return json_data
 
