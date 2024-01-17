@@ -157,12 +157,15 @@ def create_map_for_gauss(gdf):
                    ).add_to(m)
 
     return m._repr_html_()
-
-
 def filter_data_by_geometry(json_data, statenumbers):
     # Load the GeoJSON file
     with open('./data/2_hoch.geo.json') as f:
         data = json.load(f)
+
+    bundeslaender = ['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thüringen']
+
+    # Create a dictionary that maps each state to a unique ID
+    bundesland_to_id = {bundesland: i for i, bundesland in enumerate(bundeslaender)}
 
     filtered_features = []
 
@@ -181,10 +184,15 @@ def filter_data_by_geometry(json_data, statenumbers):
         shape_geometry = shape(geometry)
 
         # Filter json_data to keep only the features that intersect with the shape_geometry
-        filtered_features.extend([feature for feature in json_data['features'] if shape_geometry.intersects(LineString(feature['geometry']['coordinates']))])
+        intersecting_features = [feature for feature in json_data['features'] if shape_geometry.intersects(LineString(feature['geometry']['coordinates']))]
+
+        # Add the state ID to each intersecting feature
+        for feature in intersecting_features:
+            feature['properties']['state_id'] = statenumber
+
+        filtered_features.extend(intersecting_features)
 
     # Replace the features in json_data with the filtered features
     json_data['features'] = filtered_features
 
     return json_data
-

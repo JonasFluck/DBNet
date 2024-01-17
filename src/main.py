@@ -108,6 +108,43 @@ if 'uncertainty' in mainController.dto.gdf.columns:
 
     st.pyplot(plt)
 
-   
+# User selects states from the multiselect dropdown
+# User selects states from the multiselect dropdown
+# Get the IDs of the selected states
+   # Filter the data to keep only the rows that belong to the selected states
+observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
 
+# Calculate the average stability for each state for observed and predicted data
+average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
+average_stability_predicted = predicted.groupby('state_id')['all_stability'].mean()
 
+# Create a plot
+plt.figure(figsize=(10, 6))
+# Increase the space between the lines by adjusting the y-values
+plt.hlines(y=np.arange(len(average_stability_observed.index)) - 0.10, xmin=0, xmax=average_stability_observed*100, color='#2F4F4F', linewidth=5, label='Observed')
+plt.hlines(y=np.arange(len(average_stability_predicted.index)) + 0.1, xmin=0, xmax=average_stability_predicted*100, color='#D3D3D3', linewidth=5, label='Predicted')
+
+# Increase the size of the circles at the end of the lines
+for y, x in zip(np.arange(len(average_stability_observed.index)) - 0.1, average_stability_observed*100):
+    plt.plot(x, y, marker='o', markersize=10, color='#000080')
+for y, x in zip(np.arange(len(average_stability_predicted.index)) + 0.1, average_stability_predicted*100):
+    plt.plot(x, y, marker='o', markersize=10, color='#FF0000')
+# Create a dictionary that maps each ID to a state
+id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}
+
+# Set the y-axis labels to state names
+plt.yticks(range(len(choosen_states_ids)), [id_to_bundesland[i] for i in choosen_states_ids])
+# Set the x-axis limits
+plt.xlim(70, 100)
+
+plt.xlabel('Average Stability (%)')
+
+# Add a grid
+plt.grid(True)
+
+# Add a legend
+plt.legend()
+
+# Display the plot
+st.pyplot(plt)
