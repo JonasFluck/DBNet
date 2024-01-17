@@ -107,11 +107,8 @@ if 'uncertainty' in mainController.dto.gdf.columns:
     plt.margins(x=0.05)
 
     st.pyplot(plt)
-
 # User selects states from the multiselect dropdown
-# User selects states from the multiselect dropdown
-# Get the IDs of the selected states
-   # Filter the data to keep only the rows that belong to the selected states
+# Filter the data to keep only the rows that belong to the selected states
 observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
 predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
 
@@ -119,18 +116,22 @@ predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==
 average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
 average_stability_predicted = predicted.groupby('state_id')['all_stability'].mean()
 
+# Calculate the average stability for each provider
+providers = ['vodafone_stability', 'e-plus_stability', 'o2_stability', 't-mobile_stability']
+average_stability_providers = {provider: mainController.dto.gdf.groupby('state_id')[provider].mean() for provider in providers}
+
 # Create a plot
 plt.figure(figsize=(10, 6))
-# Increase the space between the lines by adjusting the y-values
+
+# Plot the observed and predicted data
 plt.hlines(y=np.arange(len(average_stability_observed.index)) - 0.10, xmin=0, xmax=average_stability_observed*100, color='#2F4F4F', linewidth=5, label='Observed')
 plt.hlines(y=np.arange(len(average_stability_predicted.index)) + 0.1, xmin=0, xmax=average_stability_predicted*100, color='#D3D3D3', linewidth=5, label='Predicted')
 
-# Increase the size of the circles at the end of the lines
-for y, x in zip(np.arange(len(average_stability_observed.index)) - 0.1, average_stability_observed*100):
-    plt.plot(x, y, marker='o', markersize=10, color='#000080')
-for y, x in zip(np.arange(len(average_stability_predicted.index)) + 0.1, average_stability_predicted*100):
-    plt.plot(x, y, marker='o', markersize=10, color='#FF0000')
-# Create a dictionary that maps each ID to a state
+# Plot the data for each provider
+colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']  # Define a list of colors for the providers
+for i, (provider, average_stability) in enumerate(average_stability_providers.items()):
+    plt.hlines(y=np.arange(len(average_stability.index)) + 0.1*(i+2), xmin=0, xmax=average_stability*100, color=colors[i], linewidth=5, label=provider)
+
 id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}
 
 # Set the y-axis labels to state names
