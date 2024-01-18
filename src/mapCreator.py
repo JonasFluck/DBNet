@@ -157,10 +157,15 @@ def create_map_for_gauss(gdf):
                    ).add_to(m)
 
     return m._repr_html_()
-def filter_data_by_geometry(json_data, statenumbers):
-    # Load the GeoJSON file
-    with open('./data/2_hoch.geo.json') as f:
-        data = json.load(f)
+def filter_data_by_geometry(json_data, statenumbers, forexp=False):
+
+    if forexp:
+        with open('../data/2_hoch.geo.json') as f:
+            data = json.load(f)
+    else:
+        # Load the GeoJSON file
+        with open('./data/2_hoch.geo.json') as f:
+            data = json.load(f)
 
     bundeslaender = ['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thüringen']
 

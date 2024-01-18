@@ -55,13 +55,13 @@ option = st.sidebar.radio(
 
 # Display a different map depending on the selected option
 if option == 'Map with id':
-    mainController.setData(json_data,MapTypes.ID, special_ids) 
+    mainController.setData(json_data, MapTypes.ID, special_ids)
 elif option == 'Map with knn':
-    mainController.setData(json_data,MapTypes.KNN, special_ids)
+    mainController.setData(json_data, MapTypes.KNN, special_ids)
 elif option == 'Map with stability':
-    mainController.setData(json_data,MapTypes.Stability, special_ids)
+    mainController.setData(json_data, MapTypes.Stability, special_ids)
 elif option == 'Map with Gauss': 
-    mainController.setData(json_data,MapTypes.Gauss, special_ids)
+    mainController.setData(json_data, MapTypes.Gauss, special_ids)
 if option == "Map with stability":
     checkbox_selected = st.checkbox("Show tracks with empty all_measurements")
     if checkbox_selected:
@@ -111,7 +111,7 @@ if 'uncertainty' in mainController.dto.gdf.columns:
 # User selects states from the multiselect dropdown
 # User selects states from the multiselect dropdown
 # Get the IDs of the selected states
-   # Filter the data to keep only the rows that belong to the selected states
+# Filter the data to keep only the rows that belong to the selected states
 observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
 predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
 
