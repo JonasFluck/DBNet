@@ -73,9 +73,13 @@ attributes = ['t-mobile', 'vodafone', 'o2', 'e-plus']
 colors = ['blue', 'orange', 'green', 'purple']  # Specify as many colors as attributes
 
 fig, axs = plt.subplots(2, 2, figsize=(20, 20))  # Create 2 subplots side by side
-
+if 'uncertainty' in mainController.dto.gdf.columns:
+    checkbox_provider_gauss = st.checkbox("Show tracks with empty all_measurements")
 for i, (attr, color) in enumerate(zip(attributes, colors)):
     filtered = mainController.dto.gdf[(mainController.dto.gdf[attr+'_measurements']!=0)]
+    if 'uncertainty' in mainController.dto.gdf.columns:
+        if checkbox_provider_gauss:
+            filtered = mainController.dto.gdf
     axs[i // 2, i % 2].plot(filtered.index, filtered[attr+'_stability'], marker='o', markersize=4, label=attr, color=color)
     axs[i // 2, i % 2].set_title('Network stability of ' + attr)
     axs[i // 2, i % 2].set_xlabel('Index of track')
@@ -107,8 +111,11 @@ if 'uncertainty' in mainController.dto.gdf.columns:
     plt.margins(x=0.05)
 
     st.pyplot(plt)
+
 # User selects states from the multiselect dropdown
-# Filter the data to keep only the rows that belong to the selected states
+# User selects states from the multiselect dropdown
+# Get the IDs of the selected states
+   # Filter the data to keep only the rows that belong to the selected states
 observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
 predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
 
@@ -116,22 +123,18 @@ predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==
 average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
 average_stability_predicted = predicted.groupby('state_id')['all_stability'].mean()
 
-# Calculate the average stability for each provider
-providers = ['vodafone_stability', 'e-plus_stability', 'o2_stability', 't-mobile_stability']
-average_stability_providers = {provider: mainController.dto.gdf.groupby('state_id')[provider].mean() for provider in providers}
-
 # Create a plot
 plt.figure(figsize=(10, 6))
-
-# Plot the observed and predicted data
+# Increase the space between the lines by adjusting the y-values
 plt.hlines(y=np.arange(len(average_stability_observed.index)) - 0.10, xmin=0, xmax=average_stability_observed*100, color='#2F4F4F', linewidth=5, label='Observed')
 plt.hlines(y=np.arange(len(average_stability_predicted.index)) + 0.1, xmin=0, xmax=average_stability_predicted*100, color='#D3D3D3', linewidth=5, label='Predicted')
 
-# Plot the data for each provider
-colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']  # Define a list of colors for the providers
-for i, (provider, average_stability) in enumerate(average_stability_providers.items()):
-    plt.hlines(y=np.arange(len(average_stability.index)) + 0.1*(i+2), xmin=0, xmax=average_stability*100, color=colors[i], linewidth=5, label=provider)
-
+# Increase the size of the circles at the end of the lines
+for y, x in zip(np.arange(len(average_stability_observed.index)) - 0.1, average_stability_observed*100):
+    plt.plot(x, y, marker='o', markersize=10, color='#000080')
+for y, x in zip(np.arange(len(average_stability_predicted.index)) + 0.1, average_stability_predicted*100):
+    plt.plot(x, y, marker='o', markersize=10, color='#FF0000')
+# Create a dictionary that maps each ID to a state
 id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}
 
 # Set the y-axis labels to state names
