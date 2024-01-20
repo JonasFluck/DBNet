@@ -38,6 +38,43 @@ def add_predictions_gauss_regr(data):
         data.loc[missing.index, 'all_stability'] = y_pred
         data.loc[missing.index, 'uncertainty'] = std_devs
 
+    return add_predictions_gauss_regr_provider(data)
+
+def add_predictions_gauss_regr_provider(data):
+    # Extract the coordinates from the geometry
+    data['coordinates'] = data['geometry'].apply(lambda geom: list(geom.coords) if isinstance(geom, LineString) else [geom.coords[0]])
+
+    # Extract the lat and lon values
+    data['lon'] = data['coordinates'].apply(lambda coords: coords[0][0])
+    data['lat'] = data['coordinates'].apply(lambda coords: coords[0][1])
+
+    providers = ['t-mobile', 'vodafone', 'o2', 'e-plus']  # List of providers
+
+    for provider in providers:
+        # Separate data into observations and missing values
+        observations = data[data[provider+'_measurements']!=0]
+        missing = data[data[provider+'_measurements']==0]
+
+        data[provider+'_uncertainty'] = None  # Initialize 'uncertainty' with a default value
+
+        if len(observations) > 0 and len(missing) > 0:
+            # Fit a Gaussian Process Regressor on the observed data
+            X_train = observations[['lat', 'lon']]
+            y_train = observations[provider+'_stability']
+            gpr = GaussianProcessRegressor().fit(X_train, y_train)
+
+            # Predict the missing values and get standard deviations
+            X_test = missing[['lat', 'lon']]
+            y_pred, std_devs = gpr.predict(X_test, return_std=True)
+
+            y_pred = np.clip(y_pred, 0, 1)
+            data[provider+'_stability'] = data[provider+'_stability'].astype(float)
+
+            # Fill in the missing values
+            data.loc[missing.index, provider+'_stability'] = y_pred
+            data.loc[missing.index, provider+'_uncertainty'] = std_devs
+
+    print('done')
     return data
 
 def add_predictions_knn(gdf):

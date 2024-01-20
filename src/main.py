@@ -73,9 +73,13 @@ attributes = ['t-mobile', 'vodafone', 'o2', 'e-plus']
 colors = ['blue', 'orange', 'green', 'purple']  # Specify as many colors as attributes
 
 fig, axs = plt.subplots(2, 2, figsize=(20, 20))  # Create 2 subplots side by side
-
+if 'uncertainty' in mainController.dto.gdf.columns:
+    checkbox_provider_gauss = st.checkbox("Show tracks with empty all_measurements")
 for i, (attr, color) in enumerate(zip(attributes, colors)):
     filtered = mainController.dto.gdf[(mainController.dto.gdf[attr+'_measurements']!=0)]
+    if 'uncertainty' in mainController.dto.gdf.columns:
+        if checkbox_provider_gauss:
+            filtered = mainController.dto.gdf
     axs[i // 2, i % 2].plot(filtered.index, filtered[attr+'_stability'], marker='o', markersize=4, label=attr, color=color)
     axs[i // 2, i % 2].set_title('Network stability of ' + attr)
     axs[i // 2, i % 2].set_xlabel('Index of track')

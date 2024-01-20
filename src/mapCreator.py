@@ -153,7 +153,7 @@ def create_map_for_gauss(gdf):
                        'weight': 3,
                        'fillOpacity': 0.6
                    },
-                   tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id', 'uncertainty'])
+                   tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id', 'uncertainty','t-mobile_stability','t-mobile_uncertainty', 'vodafone_stability','vodafone_uncertainty', 'o2_stability','o2_uncertainty', 'e-plus_stability','e-plus_uncertainty'])
                    ).add_to(m)
 
     return m._repr_html_()
