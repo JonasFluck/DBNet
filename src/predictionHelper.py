@@ -73,8 +73,6 @@ def add_predictions_gauss_regr_provider(data):
             # Fill in the missing values
             data.loc[missing.index, provider+'_stability'] = y_pred
             data.loc[missing.index, provider+'_uncertainty'] = std_devs
-
-    print('done')
     return data
 
 def add_predictions_knn(gdf):

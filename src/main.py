@@ -111,50 +111,61 @@ if 'uncertainty' in mainController.dto.gdf.columns:
     plt.margins(x=0.05)
 
     st.pyplot(plt)
-
+    
+        # Plotting
+plt.figure(figsize=(10, 6))  # Increase the size of the plot
     # Data preparation
-    observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
-    predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+if(choosen_states_ids):
+    if 'uncertainty' in mainController.dto.gdf.columns:
+        checkbox_state_gauss = st.checkbox("show average stability of predictions")
 
-    average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
-    average_stability_predicted = predicted.groupby('state_id')['all_stability'].mean()
-
-    providers = ['vodafone_stability', 'e-plus_stability', 'o2_stability', 't-mobile_stability']
+    providers = ['vodafone', 'e-plus', 'o2', 't-mobile']
     colors = ['#E60000', '#00FF00', '#00529c', '#D70270']
     provider_colors = dict(zip(providers, colors))
+    observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+    average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
+    if 'uncertainty' in mainController.dto.gdf.columns and checkbox_state_gauss:
+        average_stability_providers = {provider: mainController.dto.gdf.groupby('state_id')[provider+'_stability'].mean() for provider in providers}
+    else:
+        average_stability_providers = {
+            provider: mainController.dto.gdf[mainController.dto.gdf[provider+'_measurements'] != 0].groupby('state_id')[provider+'_stability'].mean() 
+            for provider in providers
+        }
+    if 'uncertainty' in mainController.dto.gdf.columns:
+        if checkbox_state_gauss:
+            predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+            average_stability_predicted = predicted.groupby('state_id')['all_stability'].mean()
+        # Plotting
+    # Define the spacing
+    inner_spacing = 0.5
+    outer_spacing = 2  # Increase the space between the states
+    # Draw the lines
+    for i in range(len(choosen_states_ids)):
+        plt.hlines(y=i*(len(providers)+outer_spacing), xmin=0, xmax=average_stability_observed[choosen_states_ids[i]]*100, color='#2F4F4F', linewidth=5, label='Observed' if i == 0 else "")
+        if 'uncertainty' in mainController.dto.gdf.columns:
+            if checkbox_state_gauss:
+                plt.hlines(y=i*(len(providers)+outer_spacing)+inner_spacing, xmin=0, xmax=average_stability_predicted[choosen_states_ids[i]]*100, color='#D3D3D3', linewidth=5, label='Predicted' if i == 0 else "")
+        for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
+            plt.hlines(y=i*(len(providers)+outer_spacing)+inner_spacing*(j+2), xmin=0, xmax=average_stability[choosen_states_ids[i]]*100, color=provider_colors[provider], linewidth=5, label=provider if i == 0 else "")
 
-    average_stability_providers = {provider: mainController.dto.gdf.groupby('state_id')[provider].mean() for provider in providers}
-    # Plotting
-    # Plotting
-plt.figure(figsize=(10, 6))  # Increase the size of the plot
+    # Add a circle at the end of each line
+    for i in range(len(choosen_states_ids)):
+        plt.scatter(average_stability_observed[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing), color='grey', s=100, zorder=2)
+        if 'uncertainty' in mainController.dto.gdf.columns:
+            if checkbox_state_gauss:
+                plt.scatter(average_stability_predicted[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing)+inner_spacing, color='grey', s=100, zorder=2)
+        for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
+            plt.scatter(average_stability[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing)+inner_spacing*(j+2), color='grey', s=100, zorder=2)
 
-# Define the spacing
-inner_spacing = 0.5
-outer_spacing = 2  # Increase the space between the states
+    # Set y-ticks and x-limits
+    id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}
+    plt.yticks(range(2, len(choosen_states_ids)*(len(providers)+outer_spacing), len(providers)+outer_spacing), [id_to_bundesland[i] for i in choosen_states_ids])
+    plt.xlim(60, 100)
 
-# Draw the lines
-for i in range(len(choosen_states_ids)):
-    plt.hlines(y=i*(len(providers)+outer_spacing), xmin=0, xmax=average_stability_observed[choosen_states_ids[i]]*100, color='#2F4F4F', linewidth=5, label='Observed' if i == 0 else "")
-    plt.hlines(y=i*(len(providers)+outer_spacing)+inner_spacing, xmin=0, xmax=average_stability_predicted[choosen_states_ids[i]]*100, color='#D3D3D3', linewidth=5, label='Predicted' if i == 0 else "")
-    for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
-        plt.hlines(y=i*(len(providers)+outer_spacing)+inner_spacing*(j+2), xmin=0, xmax=average_stability[choosen_states_ids[i]]*100, color=provider_colors[provider], linewidth=5, label=provider if i == 0 else "")
+    plt.xlabel('Average Stability (%)')
 
-# Add a circle at the end of each line
-for i in range(len(choosen_states_ids)):
-    plt.scatter(average_stability_observed[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing), color='grey', s=100, zorder=2)
-    plt.scatter(average_stability_predicted[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing)+inner_spacing, color='grey', s=100, zorder=2)
-    for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
-        plt.scatter(average_stability[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing)+inner_spacing*(j+2), color='grey', s=100, zorder=2)
+    plt.grid(True)
 
-# Set y-ticks and x-limits
-id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}
-plt.yticks(range(2, len(choosen_states_ids)*(len(providers)+outer_spacing), len(providers)+outer_spacing), [id_to_bundesland[i] for i in choosen_states_ids])
-plt.xlim(60, 100)
+    plt.legend()
 
-plt.xlabel('Average Stability (%)')
-
-plt.grid(True)
-
-plt.legend()
-
-st.pyplot(plt)
+    st.pyplot(plt)
