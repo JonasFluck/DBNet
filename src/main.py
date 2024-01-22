@@ -12,7 +12,7 @@ from mainController import MainController
 from MapTypes import MapTypes
 from scipy.interpolate import UnivariateSpline
 
-# Load the JSON data from a file
+# Load the JSON data from a file    
 with open('./data/db.json') as f:
     json_data = json.load(f)
 
@@ -112,61 +112,61 @@ if 'uncertainty' in mainController.dto.gdf.columns:
 
     st.pyplot(plt)
     
-        # Plotting
-plt.figure(figsize=(10, 6))  # Increase the size of the plot
+    # Plotting
+    plt.figure(figsize=(10, 6))  # Increase the size of the plot
     # Data preparation
-if(choosen_states_ids):
-    if 'uncertainty' in mainController.dto.gdf.columns:
-        checkbox_state_gauss = st.checkbox("show average stability of predictions")
-
-    providers = ['vodafone', 'e-plus', 'o2', 't-mobile']
-    colors = ['#E60000', '#00FF00', '#00529c', '#D70270']
-    provider_colors = dict(zip(providers, colors))
-    observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
-    average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
-    if 'uncertainty' in mainController.dto.gdf.columns and checkbox_state_gauss:
-        average_stability_providers = {provider: mainController.dto.gdf.groupby('state_id')[provider+'_stability'].mean() for provider in providers}
-    else:
-        average_stability_providers = {
-            provider: mainController.dto.gdf[mainController.dto.gdf[provider+'_measurements'] != 0].groupby('state_id')[provider+'_stability'].mean() 
-            for provider in providers
-        }
-    if 'uncertainty' in mainController.dto.gdf.columns:
-        if checkbox_state_gauss:
-            predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
-            average_stability_predicted = predicted.groupby('state_id')['all_stability'].mean()
-        # Plotting
-    # Define the spacing
-    inner_spacing = 0.5
-    outer_spacing = 2  # Increase the space between the states
-    # Draw the lines
-    for i in range(len(choosen_states_ids)):
-        plt.hlines(y=i*(len(providers)+outer_spacing), xmin=0, xmax=average_stability_observed[choosen_states_ids[i]]*100, color='#2F4F4F', linewidth=5, label='Observed' if i == 0 else "")
+    if(choosen_states_ids):
         if 'uncertainty' in mainController.dto.gdf.columns:
-            if checkbox_state_gauss and choosen_states_ids[i] in average_stability_predicted.index:
-                plt.hlines(y=i*(len(providers)+outer_spacing)+inner_spacing, xmin=0, xmax=average_stability_predicted[choosen_states_ids[i]]*100, color='#D3D3D3', linewidth=5, label='Predicted' if i == 0 else "")
-        for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
-            plt.hlines(y=i*(len(providers)+outer_spacing)+inner_spacing*(j+2), xmin=0, xmax=average_stability[choosen_states_ids[i]]*100, color=provider_colors[provider], linewidth=5, label=provider if i == 0 else "")
+            checkbox_state_gauss = st.checkbox("show average stability of predictions")
+
+        providers = ['vodafone', 'e-plus', 'o2', 't-mobile']
+        colors = ['#E60000', '#00FF00', '#00529c', '#D70270']
+        provider_colors = dict(zip(providers, colors))
+        observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+        average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
+        if 'uncertainty' in mainController.dto.gdf.columns and checkbox_state_gauss:
+            average_stability_providers = {provider: mainController.dto.gdf.groupby('state_id')[provider+'_stability'].mean() for provider in providers}
+        else:
+            average_stability_providers = {
+                provider: mainController.dto.gdf[mainController.dto.gdf[provider+'_measurements'] != 0].groupby('state_id')[provider+'_stability'].mean() 
+                for provider in providers
+            }
+        if 'uncertainty' in mainController.dto.gdf.columns:
+            if checkbox_state_gauss:
+                predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+                average_stability_predicted = predicted.groupby('state_id')['all_stability'].mean()
+            # Plotting
+        # Define the spacing
+        inner_spacing = 0.5
+        outer_spacing = 0.5  # Decrease the space between the states
+        # Draw the lines
+        for i in range(len(choosen_states_ids)):
+            plt.hlines(y=i*(len(providers)), xmin=0, xmax=average_stability_observed[choosen_states_ids[i]]*100, color='#2F4F4F', linewidth=5, label='Observed' if i == 0 else "")
+            if 'uncertainty' in mainController.dto.gdf.columns:
+                if checkbox_state_gauss and choosen_states_ids[i] in average_stability_predicted.index:
+                    plt.hlines(y=i*(len(providers))+inner_spacing, xmin=0, xmax=average_stability_predicted[choosen_states_ids[i]]*100, color='#D3D3D3', linewidth=5, label='Predicted' if i == 0 else "")
+            for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
+                plt.hlines(y=i*(len(providers))+inner_spacing*(j+2), xmin=0, xmax=average_stability[choosen_states_ids[i]]*100, color=provider_colors[provider], linewidth=5, label=provider if i == 0 else "")
 
         # Add a circle at the end of each line
-    for i in range(len(choosen_states_ids)):
-        if choosen_states_ids[i] in average_stability_observed:
-            plt.scatter(average_stability_observed[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing), color='grey', s=100, zorder=2)
-        if 'uncertainty' in mainController.dto.gdf.columns:
-            if checkbox_state_gauss and choosen_states_ids[i] in average_stability_predicted:
-                plt.scatter(average_stability_predicted[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing)+inner_spacing, color='grey', s=100, zorder=2)
-        for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
-            if choosen_states_ids[i] in average_stability:
-                plt.scatter(average_stability[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing)+inner_spacing*(j+2), color='grey', s=100, zorder=2)
-    # Set y-ticks and x-limits
-    id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}
-    plt.yticks(range(2, len(choosen_states_ids)*(len(providers)+outer_spacing), len(providers)+outer_spacing), [id_to_bundesland[i] for i in choosen_states_ids])
-    plt.xlim(60, 100)
+        for i in range(len(choosen_states_ids)):
+            if choosen_states_ids[i] in average_stability_observed:
+                plt.scatter(average_stability_observed[choosen_states_ids[i]]*100, i*(len(providers)), color='grey', s=100, zorder=2)
+            if 'uncertainty' in mainController.dto.gdf.columns:
+                if checkbox_state_gauss and choosen_states_ids[i] in average_stability_predicted:
+                    plt.scatter(average_stability_predicted[choosen_states_ids[i]]*100, i*(len(providers))+inner_spacing, color='grey', s=100, zorder=2)
+            for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
+                if choosen_states_ids[i] in average_stability:
+                    plt.scatter(average_stability[choosen_states_ids[i]]*100, i*(len(providers))+inner_spacing*(j+2), color='grey', s=100, zorder=2)
+        # Set y-ticks and x-limits
+        id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}
+        plt.yticks(range(2, len(choosen_states_ids)*(len(providers)), len(providers)), [id_to_bundesland[i] for i in choosen_states_ids], fontsize=14)
+        plt.xticks(fontsize=12)
+        plt.xlim(50, 100)
 
-    plt.xlabel('Average Stability (%)')
+        plt.xlabel('Average Stability (%)', fontsize=12)
+        legend = plt.legend(fontsize=12, loc='upper right', bbox_to_anchor=(1.25, 1.0))
+        legend.get_frame().set_edgecolor('black')
+        plt.grid(True, axis='x', color='black', linewidth=1, alpha=0.2)
 
-    plt.grid(True)
-
-    plt.legend()
-
-    st.pyplot(plt)
+        st.pyplot(plt)
