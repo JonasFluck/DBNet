@@ -63,7 +63,7 @@ elif option == 'Map with stability':
 elif option == 'Map with Gauss': 
     mainController.setData(json_data,MapTypes.Gauss, special_ids)
 if option == "Map with stability":
-    checkbox_selected = st.checkbox("Show tracks with empty all_measurements")
+    checkbox_selected = st.checkbox("Show tracks with no measuremnts")
     if checkbox_selected:
         mainController.setData(json_data,MapTypes.StabilityWithEmptyMeasures, special_ids)
 
@@ -74,7 +74,7 @@ colors = ['blue', 'orange', 'green', 'purple']  # Specify as many colors as attr
 
 fig, axs = plt.subplots(2, 2, figsize=(20, 20))  # Create 2 subplots side by side
 if 'uncertainty' in mainController.dto.gdf.columns:
-    checkbox_provider_gauss = st.checkbox("Show tracks with empty all_measurements")
+    checkbox_provider_gauss = st.checkbox("Show tracks with no measurements")
 for i, (attr, color) in enumerate(zip(attributes, colors)):
     filtered = mainController.dto.gdf[(mainController.dto.gdf[attr+'_measurements']!=0)]
     if 'uncertainty' in mainController.dto.gdf.columns:
@@ -143,20 +143,21 @@ if(choosen_states_ids):
     for i in range(len(choosen_states_ids)):
         plt.hlines(y=i*(len(providers)+outer_spacing), xmin=0, xmax=average_stability_observed[choosen_states_ids[i]]*100, color='#2F4F4F', linewidth=5, label='Observed' if i == 0 else "")
         if 'uncertainty' in mainController.dto.gdf.columns:
-            if checkbox_state_gauss:
+            if checkbox_state_gauss and choosen_states_ids[i] in average_stability_predicted.index:
                 plt.hlines(y=i*(len(providers)+outer_spacing)+inner_spacing, xmin=0, xmax=average_stability_predicted[choosen_states_ids[i]]*100, color='#D3D3D3', linewidth=5, label='Predicted' if i == 0 else "")
         for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
             plt.hlines(y=i*(len(providers)+outer_spacing)+inner_spacing*(j+2), xmin=0, xmax=average_stability[choosen_states_ids[i]]*100, color=provider_colors[provider], linewidth=5, label=provider if i == 0 else "")
 
-    # Add a circle at the end of each line
+        # Add a circle at the end of each line
     for i in range(len(choosen_states_ids)):
-        plt.scatter(average_stability_observed[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing), color='grey', s=100, zorder=2)
+        if choosen_states_ids[i] in average_stability_observed:
+            plt.scatter(average_stability_observed[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing), color='grey', s=100, zorder=2)
         if 'uncertainty' in mainController.dto.gdf.columns:
-            if checkbox_state_gauss:
+            if checkbox_state_gauss and choosen_states_ids[i] in average_stability_predicted:
                 plt.scatter(average_stability_predicted[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing)+inner_spacing, color='grey', s=100, zorder=2)
         for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
-            plt.scatter(average_stability[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing)+inner_spacing*(j+2), color='grey', s=100, zorder=2)
-
+            if choosen_states_ids[i] in average_stability:
+                plt.scatter(average_stability[choosen_states_ids[i]]*100, i*(len(providers)+outer_spacing)+inner_spacing*(j+2), color='grey', s=100, zorder=2)
     # Set y-ticks and x-limits
     id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}
     plt.yticks(range(2, len(choosen_states_ids)*(len(providers)+outer_spacing), len(providers)+outer_spacing), [id_to_bundesland[i] for i in choosen_states_ids])

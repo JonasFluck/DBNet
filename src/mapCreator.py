@@ -2,18 +2,27 @@ import pandas as pd
 import folium
 import random
 import json
-
+import numpy as np
 from shapely.geometry import shape, Point, LineString
 from branca.colormap import LinearColormap
 from MapTypes import MapTypes
-# Define the Cividis color palette
-colors = ['#00204C', '#482878', '#6C1B7C', '#91267A', '#B63679', '#D54678', '#EF6079', '#FF7E7C']
+from matplotlib import pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+# Define the colors for the colormap
+# Define the colors for the colormap
+colors = ["blue", "lightblue", "orange", "darkorange"]
 
 # Define the data values at which the color transitions occur
-index = [0, 0.2, 0.4, 0.6, 0.7, 0.8, 0.9, 1]
+index = [0, 0.5, 0.7, 0.8, 0.9, 1.0]
 
-# Create a colormap
-cmap = LinearColormap(colors, index=index, vmin=0, vmax=1)
+# Create a colormap that transitions from blue to orange
+cmap = LinearSegmentedColormap.from_list("blue_to_orange", colors)
+
+# Get colors from the new colormap
+custom_colors = [cmap(i) for i in np.linspace(0, 1, len(index))]
+
+# Create a colormap with the same syntax as your original code
+cmap = LinearColormap(custom_colors, index=index, vmin=0, vmax=1)
 def create_map(gdf, map_type):
     if map_type == MapTypes.KNN:
         return create_map_knn(gdf)
