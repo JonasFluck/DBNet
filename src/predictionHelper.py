@@ -5,6 +5,8 @@ import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from shapely.geometry import LineString
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.gaussian_process.kernels import RBF
+
 
 def add_predictions_gauss_regr(data):
     # Extract the coordinates from the geometry
@@ -25,7 +27,8 @@ def add_predictions_gauss_regr(data):
         # Fit a Gaussian Process Regressor on the observed data
         X_train = observations[['lat', 'lon']]
         y_train = observations['all_stability']
-        gpr = GaussianProcessRegressor().fit(X_train, y_train)
+
+        gpr = GaussianProcessRegressor(alpha=1e-2, kernel=RBF()).fit(X_train, y_train)
 
         # Predict the missing values and get standard deviations
         X_test = missing[['lat', 'lon']]
@@ -61,6 +64,7 @@ def add_predictions_gauss_regr_provider(data):
             # Fit a Gaussian Process Regressor on the observed data
             X_train = observations[['lat', 'lon']]
             y_train = observations[provider+'_stability']
+           
             gpr = GaussianProcessRegressor().fit(X_train, y_train)
 
             # Predict the missing values and get standard deviations
