@@ -199,7 +199,7 @@ if 'uncertainty' in mainController.dto.gdf.columns:
         plt.ylim(0, 1.4)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
         plt.yticks(np.arange(0, 1.1, 0.2))  # Setzt die y-Ticks in Schritten von 0,2
 
-        plt.title('Stability of Predictions with 95% Confidence Interval (Subsample of every 100th Datapoint)')
+        plt.title('Stability of Predictions with 95% Confidence Interval')
         plt.xlabel('Index')
         plt.ylabel('Stability')
         plt.legend()

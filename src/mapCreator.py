@@ -133,7 +133,7 @@ def create_map_stability_with_empty(gdf):
     # Add the data
     folium.GeoJson(gdf,
                    style_function=lambda feature: {
-                       'color': 'purple' if feature['properties']['all_measurements'] == 0 else cmap(feature['properties']['all_stability']),
+                       'color': 'turquoise' if feature['properties']['all_measurements'] == 0 else cmap(feature['properties']['all_stability']),
                        'weight': 2,
                        'fillOpacity': 0.6
                    },
