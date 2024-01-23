@@ -74,7 +74,7 @@ colors = ['blue', 'orange', 'green', 'purple']  # Specify as many colors as attr
 
 fig, axs = plt.subplots(2, 2, figsize=(20, 20))  # Create 2 subplots side by side
 if 'uncertainty' in mainController.dto.gdf.columns:
-    checkbox_provider_gauss = st.checkbox("Show tracks with no measurements")
+    checkbox_provider_gauss = st.checkbox("Estimate missing data points for providers")
 for i, (attr, color) in enumerate(zip(attributes, colors)):
     filtered = mainController.dto.gdf[(mainController.dto.gdf[attr+'_measurements']!=0)]
     if 'uncertainty' in mainController.dto.gdf.columns:
@@ -102,7 +102,6 @@ if 'uncertainty' in mainController.dto.gdf.columns:
     plt.figure(figsize=(10, 5))
     plt.scatter(data[data['uncertainty'].isnull()].index, data[data['uncertainty'].isnull()]['all_stability'], color='blue', label='Observed', s=3)
     plt.scatter(data[data['uncertainty'].notnull()].index, data[data['uncertainty'].notnull()]['all_stability'], color='orange', label='Predicted', s=3)
-    
     
     plt.title('Stability of Predictions')
     plt.xlabel('Index')
@@ -169,5 +168,41 @@ if 'uncertainty' in mainController.dto.gdf.columns:
         legend = plt.legend(fontsize=12, loc='upper right', bbox_to_anchor=(1.25, 1.01))
         legend.get_frame().set_edgecolor('black')
         plt.grid(True, axis='x', color='black', linewidth=1, alpha=0.2)
+
+    st.pyplot(plt)
+    if 'uncertainty' in mainController.dto.gdf.columns:
+        checkbox_subsample = st.checkbox("Show subsample of every 100th datapoint")
+        if checkbox_subsample:
+            subsample = mainController.dto.gdf.iloc[::100]
+        else:
+            subsample = mainController.dto.gdf.copy()
+        subsample['uncertainty'].fillna(0, inplace=True)
+        # Plot of the datapoints differentiated by whether they were observed or predicted
+        observed = subsample[subsample['uncertainty']==0]
+        predicted = subsample[subsample['uncertainty']!=0]
+
+        data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
+
+        plt.figure(figsize=(10, 5))
+        plt.scatter(observed.index, observed['all_stability'], color='blue', label='Observed', s=20)
+        plt.scatter(predicted.index, predicted['all_stability'], color='orange', label='Predicted', s=20)
+
+
+        # Überprüfen Sie, ob es nicht leere Daten in der 'uncertainty'-Spalte gibt, bevor Sie das Konfidenzintervall plotten
+        if 'uncertainty' in subsample.columns and pd.api.types.is_numeric_dtype(subsample['uncertainty']):
+            # Schattierung basierend auf Unsicherheit
+            plt.fill_between(subsample.index,
+                            subsample['all_stability'] - 1.96 * subsample['uncertainty'],
+                            subsample['all_stability'] + 1.96 * subsample['uncertainty'],
+                            color='orange', alpha=0.2, label='Uncertainty')
+
+        plt.ylim(0, 1.4)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
+        plt.yticks(np.arange(0, 1.1, 0.2))  # Setzt die y-Ticks in Schritten von 0,2
+
+        plt.title('Stability of Predictions with 95% Confidence Interval (Subsample of every 100th Datapoint)')
+        plt.xlabel('Index')
+        plt.ylabel('Stability')
+        plt.legend()
+        plt.margins(x=0.05)
 
         st.pyplot(plt)
