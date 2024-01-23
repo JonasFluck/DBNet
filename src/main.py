@@ -4,23 +4,20 @@ import streamlit.components.v1 as components
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import seaborn as sns
-from sklearn.linear_model import LinearRegression
-import scipy.stats  
 from mapCreator import filter_data_by_geometry
 from mainController import MainController
 from MapTypes import MapTypes
-from scipy.interpolate import UnivariateSpline
 
 # Load the JSON data from a file
 with open('./data/db.json') as f:
     json_data = json.load(f)
 
-bundeslaender = ['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thüringen']
+bundeslaender = ['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen',
+                 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland',
+                 'Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thüringen']
 
 # Create a dictionary that maps each state to a unique ID
 bundesland_to_id = {bundesland: i for i, bundesland in enumerate(bundeslaender)}
-
 
 choosen_states = st.multiselect("Choose a country state:", bundeslaender, default=["Baden-Württemberg"])
 
@@ -29,10 +26,10 @@ choosen_states_ids = [bundesland_to_id[bundesland] for bundesland in choosen_sta
 
 special_ids = None
 
-#If no state is selected show all
+# If no state is selected show all
 if choosen_states:
     json_data = filter_data_by_geometry(json_data, choosen_states_ids)
-    
+
 checkbox_specific_ids = st.checkbox("Select specific tracks by ID")
 if checkbox_specific_ids:
     special_ids_input = st.text_input("Enter Special IDs (comma-separated)")
@@ -40,7 +37,7 @@ if checkbox_specific_ids:
     try:
         if any(not isinstance(id, int) for id in special_ids):
             raise ValueError("All IDs must be integers.")
-        if(not special_ids):
+        if (not special_ids):
             special_ids = None
     except ValueError as e:
         st.error(f"Error: {e}")
@@ -60,12 +57,12 @@ elif option == 'Map with knn':
     mainController.setData(json_data, MapTypes.KNN, special_ids)
 elif option == 'Map with stability':
     mainController.setData(json_data, MapTypes.Stability, special_ids)
-elif option == 'Map with Gauss': 
+elif option == 'Map with Gauss':
     mainController.setData(json_data, MapTypes.Gauss, special_ids)
 if option == "Map with stability":
     checkbox_selected = st.checkbox("Show tracks with empty all_measurements")
     if checkbox_selected:
-        mainController.setData(json_data,MapTypes.StabilityWithEmptyMeasures, special_ids)
+        mainController.setData(json_data, MapTypes.StabilityWithEmptyMeasures, special_ids)
 
 with st.container():
     components.html(mainController.map, height=500, width=900)
@@ -75,8 +72,9 @@ colors = ['blue', 'orange', 'green', 'purple']  # Specify as many colors as attr
 fig, axs = plt.subplots(2, 2, figsize=(20, 20))  # Create 2 subplots side by side
 
 for i, (attr, color) in enumerate(zip(attributes, colors)):
-    filtered = mainController.dto.gdf[(mainController.dto.gdf[attr+'_measurements']!=0)]
-    axs[i // 2, i % 2].plot(filtered.index, filtered[attr+'_stability'], marker='o', markersize=4, label=attr, color=color)
+    filtered = mainController.dto.gdf[(mainController.dto.gdf[attr + '_measurements'] != 0)]
+    axs[i // 2, i % 2].plot(filtered.index, filtered[attr + '_stability'], marker='o', markersize=4, label=attr,
+                            color=color)
     axs[i // 2, i % 2].set_title('Network stability of ' + attr)
     axs[i // 2, i % 2].set_xlabel('Index of track')
     axs[i // 2, i % 2].set_ylabel('Stability')
@@ -91,15 +89,17 @@ for provider, average in mainController.dto.avg_providers.items():
 
 if 'uncertainty' in mainController.dto.gdf.columns:
     # Plot of the datapoints differentiated by whether they were observed or predicted
-    observed = mainController.dto.gdf[mainController.dto.gdf['uncertainty'].isnull()]
-    predicted = mainController.dto.gdf[mainController.dto.gdf['uncertainty'].isnull()==False]
+    # Plot of the datapoints differentiated by whether they were observed or predicted
+    observed = mainController.dto.gdf[mainController.dto.gdf['uncertainty'] == 0]
+    predicted = mainController.dto.gdf[mainController.dto.gdf['uncertainty'] != 0]
     data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
 
     plt.figure(figsize=(10, 5))
-    plt.scatter(data[data['uncertainty'].isnull()].index, data[data['uncertainty'].isnull()]['all_stability'], color='blue', label='Observed', s=3)
-    plt.scatter(data[data['uncertainty'].notnull()].index, data[data['uncertainty'].notnull()]['all_stability'], color='orange', label='Predicted', s=3)
-    
-    
+    plt.scatter(data[data['uncertainty'] == 0].index, data[data['uncertainty'] == 0]['all_stability'],
+                color='blue', label='Observed', s=3)
+    plt.scatter(data[data['uncertainty'] != 0].index, data[data['uncertainty'] != 0]['all_stability'],
+                color='orange', label='Predicted', s=3)
+
     plt.title('Stability of Predictions')
     plt.xlabel('Index')
     plt.ylabel('Stability')
@@ -108,12 +108,46 @@ if 'uncertainty' in mainController.dto.gdf.columns:
 
     st.pyplot(plt)
 
+if 'uncertainty' in mainController.dto.gdf.columns:
+    subsample = mainController.dto.gdf.iloc[::100]
+    # Plot of the datapoints differentiated by whether they were observed or predicted
+    observed = subsample[subsample['uncertainty'] == 0]
+    predicted = subsample[subsample['uncertainty'] != 0]
+
+    data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
+
+    plt.figure(figsize=(10, 5))
+    plt.scatter(observed.index, observed['all_stability'], color='blue', label='Observed', s=20)
+    plt.scatter(predicted.index, predicted['all_stability'], color='orange', label='Predicted', s=20)
+
+
+    # Überprüfen Sie, ob es nicht leere Daten in der 'uncertainty'-Spalte gibt, bevor Sie das Konfidenzintervall plotten
+    if 'uncertainty' in subsample.columns and pd.api.types.is_numeric_dtype(subsample['uncertainty']):
+        # Schattierung basierend auf Unsicherheit
+        plt.fill_between(subsample.index,
+                         subsample['all_stability'] - 1.96 * subsample['uncertainty'],
+                         subsample['all_stability'] + 1.96 * subsample['uncertainty'],
+                         color='orange', alpha=0.2, label='Uncertainty')
+
+    plt.ylim(0, 1.4)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
+    plt.yticks(np.arange(0, 1.1, 0.2))  # Setzt die y-Ticks in Schritten von 0,2
+
+    plt.title('Stability of Predictions with 95% Confidence Interval (Subsample of every 100th Datapoint)')
+    plt.xlabel('Index')
+    plt.ylabel('Stability')
+    plt.legend()
+    plt.margins(x=0.05)
+
+    st.pyplot(plt)
+
 # User selects states from the multiselect dropdown
 # User selects states from the multiselect dropdown
 # Get the IDs of the selected states
 # Filter the data to keep only the rows that belong to the selected states
-observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
-predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+observed = mainController.dto.gdf[
+    (mainController.dto.gdf['all_measurements'] != 0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+predicted = mainController.dto.gdf[
+    (mainController.dto.gdf['all_measurements'] == 0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
 
 # Calculate the average stability for each state for observed and predicted data
 average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
@@ -122,13 +156,15 @@ average_stability_predicted = predicted.groupby('state_id')['all_stability'].mea
 # Create a plot
 plt.figure(figsize=(10, 6))
 # Increase the space between the lines by adjusting the y-values
-plt.hlines(y=np.arange(len(average_stability_observed.index)) - 0.10, xmin=0, xmax=average_stability_observed*100, color='#2F4F4F', linewidth=5, label='Observed')
-plt.hlines(y=np.arange(len(average_stability_predicted.index)) + 0.1, xmin=0, xmax=average_stability_predicted*100, color='#D3D3D3', linewidth=5, label='Predicted')
+plt.hlines(y=np.arange(len(average_stability_observed.index)) - 0.10, xmin=0, xmax=average_stability_observed * 100,
+           color='#2F4F4F', linewidth=5, label='Observed')
+plt.hlines(y=np.arange(len(average_stability_predicted.index)) + 0.1, xmin=0, xmax=average_stability_predicted * 100,
+           color='#D3D3D3', linewidth=5, label='Predicted')
 
 # Increase the size of the circles at the end of the lines
-for y, x in zip(np.arange(len(average_stability_observed.index)) - 0.1, average_stability_observed*100):
+for y, x in zip(np.arange(len(average_stability_observed.index)) - 0.1, average_stability_observed * 100):
     plt.plot(x, y, marker='o', markersize=10, color='#000080')
-for y, x in zip(np.arange(len(average_stability_predicted.index)) + 0.1, average_stability_predicted*100):
+for y, x in zip(np.arange(len(average_stability_predicted.index)) + 0.1, average_stability_predicted * 100):
     plt.plot(x, y, marker='o', markersize=10, color='#FF0000')
 # Create a dictionary that maps each ID to a state
 id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}

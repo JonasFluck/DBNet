@@ -1,10 +1,10 @@
-
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from sklearn.gaussian_process import GaussianProcessRegressor
-from shapely.geometry import LineString
+from sklearn.gaussian_process.kernels import Matern, RBF
 from sklearn.neighbors import KNeighborsRegressor
+from shapely.geometry import LineString
+from sklearn.model_selection import cross_val_score
 
 def add_predictions_gauss_regr(data):
     # Extract the coordinates from the geometry
@@ -18,14 +18,15 @@ def add_predictions_gauss_regr(data):
     observations = data[data['all_measurements']!=0]
     missing = data[data['all_measurements']==0]
 
-    data['uncertainty'] = None  # Initialize 'uncertainty' with a default value
+    data['uncertainty'] = 0  # Initialize 'uncertainty' with a default value
 
     std_devs = None
     if len(observations) > 0 and len(missing) > 0:
         # Fit a Gaussian Process Regressor on the observed data
         X_train = observations[['lat', 'lon']]
         y_train = observations['all_stability']
-        gpr = GaussianProcessRegressor().fit(X_train, y_train)
+        # gpr = GaussianProcessRegressor(alpha=1e-3, kernel=RBF()).fit(X_train, y_train)
+        gpr = GaussianProcessRegressor(alpha=1e-2, kernel=RBF()).fit(X_train, y_train)
 
         # Predict the missing values and get standard deviations
         X_test = missing[['lat', 'lon']]
@@ -39,6 +40,7 @@ def add_predictions_gauss_regr(data):
         data.loc[missing.index, 'uncertainty'] = std_devs
 
     return data
+
 
 def add_predictions_knn(gdf):
     gdf['all_stability'] = pd.to_numeric(gdf['all_stability'], errors='coerce')
