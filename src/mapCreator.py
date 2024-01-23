@@ -2,12 +2,18 @@ import pandas as pd
 import folium
 import random
 import json
-
+import numpy as np
 from shapely.geometry import shape, Point, LineString
 from branca.colormap import LinearColormap
 from MapTypes import MapTypes
-
-cmap = LinearColormap(['red', 'yellow', 'green'], vmin=0, vmax=1)
+from matplotlib import pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+# Define the colors for the colormap
+colors = ["red", "orange", "lightblue", "blue", "darkblue"]
+index = [0, 0.5, 0.7, 0.8, 0.9,  1.0]
+cmap = LinearSegmentedColormap.from_list("blue_to_orange", colors)
+custom_colors = [cmap(i) for i in np.linspace(0, 1, len(index))]
+cmap = LinearColormap(custom_colors, index=index, vmin=0, vmax=1)
 
 def create_map(gdf, map_type):
     if map_type == MapTypes.KNN:
@@ -27,7 +33,13 @@ def get_random_color():
     return '#%02X%02X%02X' % (r(), r(), r())
 
 
+from branca.colormap import LinearColormap
+
 def create_map_with_stability(gdf):
+    # Define a blue to orange colormap
+    colors = ['#0000FF', '#FFA500']
+    cmap = LinearColormap(colors, vmin=0, vmax=1)
+
     m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
                    min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
     # Add the data
@@ -45,7 +57,8 @@ def create_map_with_stability(gdf):
                    tooltip=folium.GeoJsonTooltip(fields=['all_stability'])
                    ).add_to(m)
 
-    # Add the colormap to the map
+    # Add the colormap to the map as a legend
+    cmap.caption = "Stability"
     cmap.add_to(m)
 
     return m._repr_html_()
@@ -89,7 +102,7 @@ def create_map_knn(gdf):
                    },
                    tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements'])
                    ).add_to(m)
-
+    
     # Add the predicted values to the map
     folium.GeoJson(gdf[gdf['all_measurements'] == 0],
                    style_function=lambda feature: {
@@ -106,7 +119,7 @@ def create_map_knn(gdf):
                    tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements'])
                    ).add_to(m)
 
-    # Add the colormap to the map
+    cmap.caption = "Stability"
     cmap.add_to(m)
     return m._repr_html_()
 
@@ -120,7 +133,7 @@ def create_map_stability_with_empty(gdf):
     # Add the data
     folium.GeoJson(gdf,
                    style_function=lambda feature: {
-                       'color': 'purple' if feature['properties']['all_measurements'] == 0 else cmap(feature['properties']['all_stability']),
+                       'color': 'turquoise' if feature['properties']['all_measurements'] == 0 else cmap(feature['properties']['all_stability']),
                        'weight': 2,
                        'fillOpacity': 0.6
                    },
@@ -155,6 +168,8 @@ def create_map_for_gauss(gdf):
                    },
                    tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id', 'uncertainty','t-mobile_stability','t-mobile_uncertainty', 'vodafone_stability','vodafone_uncertainty', 'o2_stability','o2_uncertainty', 'e-plus_stability','e-plus_uncertainty'])
                    ).add_to(m)
+    cmap.caption = "Stability"
+    cmap.add_to(m)
 
     return m._repr_html_()
 def filter_data_by_geometry(json_data, statenumbers):
