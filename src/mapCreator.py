@@ -9,7 +9,7 @@ from MapTypes import MapTypes
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 # Define the colors for the colormap
-colors = ["blue", "lightblue", "orange", "darkorange", "red"]
+colors = ["red", "orange", "lightblue", "blue", "darkblue"]
 index = [0, 0.5, 0.7, 0.8, 0.9,  1.0]
 cmap = LinearSegmentedColormap.from_list("blue_to_orange", colors)
 custom_colors = [cmap(i) for i in np.linspace(0, 1, len(index))]
