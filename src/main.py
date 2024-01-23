@@ -169,8 +169,11 @@ if(choosen_states_ids):
 
     st.pyplot(plt)
     if 'uncertainty' in mainController.dto.gdf.columns:
-        #subsample = mainController.dto.gdf.iloc[::100]
-        subsample = mainController.dto.gdf.copy()
+        checkbox_subsample = st.checkbox("Show subsample of every 100th datapoint")
+        if checkbox_subsample:
+            subsample = mainController.dto.gdf.iloc[::100]
+        else:
+            subsample = mainController.dto.gdf.copy()
         subsample['uncertainty'].fillna(0, inplace=True)
         # Plot of the datapoints differentiated by whether they were observed or predicted
         observed = subsample[subsample['uncertainty']==0]
