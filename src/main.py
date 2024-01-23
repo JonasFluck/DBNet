@@ -16,13 +16,13 @@ from scipy.interpolate import UnivariateSpline
 with open('./data/db.json') as f:
     json_data = json.load(f)
 
-bundeslaender = ['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thüringen']
+bundeslaender = ['Baden-Wuerttemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thueringen']
 
 # Create a dictionary that maps each state to a unique ID
 bundesland_to_id = {bundesland: i for i, bundesland in enumerate(bundeslaender)}
 
 
-choosen_states = st.multiselect("Choose a country state:", bundeslaender, default=["Baden-Württemberg"])
+choosen_states = st.multiselect("Choose a country state:", bundeslaender, default=["Baden-Wuerttemberg"])
 
 # Get the IDs of the selected states
 choosen_states_ids = [bundesland_to_id[bundesland] for bundesland in choosen_states]
@@ -162,10 +162,11 @@ if 'uncertainty' in mainController.dto.gdf.columns:
         id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}
         plt.yticks(range(2, len(choosen_states_ids)*(len(providers)), len(providers)), [id_to_bundesland[i] for i in choosen_states_ids], fontsize=14)
         plt.xticks(fontsize=12)
-        plt.xlim(50, 100)
+        plt.xlim(50, 100)  
+    
 
-        plt.xlabel('Average Stability (%)', fontsize=12)
-        legend = plt.legend(fontsize=12, loc='upper right', bbox_to_anchor=(1.25, 1.0))
+        plt.xlabel('Average Stability (%)', fontsize=14)
+        legend = plt.legend(fontsize=12, loc='upper right', bbox_to_anchor=(1.25, 1.01))
         legend.get_frame().set_edgecolor('black')
         plt.grid(True, axis='x', color='black', linewidth=1, alpha=0.2)
 

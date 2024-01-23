@@ -9,20 +9,12 @@ from MapTypes import MapTypes
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 # Define the colors for the colormap
-# Define the colors for the colormap
-colors = ["blue", "lightblue", "orange", "darkorange"]
-
-# Define the data values at which the color transitions occur
-index = [0, 0.5, 0.7, 0.8, 0.9, 1.0]
-
-# Create a colormap that transitions from blue to orange
+colors = ["blue", "lightblue", "orange", "darkorange", "red"]
+index = [0, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0]
 cmap = LinearSegmentedColormap.from_list("blue_to_orange", colors)
-
-# Get colors from the new colormap
 custom_colors = [cmap(i) for i in np.linspace(0, 1, len(index))]
-
-# Create a colormap with the same syntax as your original code
 cmap = LinearColormap(custom_colors, index=index, vmin=0, vmax=1)
+
 def create_map(gdf, map_type):
     if map_type == MapTypes.KNN:
         return create_map_knn(gdf)
