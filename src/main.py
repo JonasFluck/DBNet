@@ -85,7 +85,6 @@ st.pyplot(fig)
 
 for provider, average in mainController.dto.avg_providers.items():
     st.write(f"The average stability for {provider} is: {format(average, '.2f')}")
-
 if 'uncertainty' in mainController.dto.gdf.columns:
     # Plot of the datapoints differentiated by whether they were observed or predicted
     observed = mainController.dto.gdf[mainController.dto.gdf['uncertainty'].isnull()]
@@ -96,11 +95,12 @@ if 'uncertainty' in mainController.dto.gdf.columns:
     plt.scatter(data[data['uncertainty'].isnull()].index, data[data['uncertainty'].isnull()]['all_stability'], color='blue', label='Observed', s=3)
     plt.scatter(data[data['uncertainty'].notnull()].index, data[data['uncertainty'].notnull()]['all_stability'], color='orange', label='Predicted', s=3)
     
-    plt.title('Stability of Predictions with 95% Confidence Interval', fontsize=18) 
-    plt.xlabel('Index', fontsize=18)  
-    plt.ylabel('Stability', fontsize=18)  
+    plt.xlabel('Index', fontsize=18)  # Set font size for x-label
+    plt.ylabel('Stability', fontsize=18)  # Set font size for y-label
 
-    plt.legend(['Observed', 'Predicted'],fontsize=18)
+    plt.tick_params(axis='both', which='major', labelsize=18)  # Set font size for tick labels
+
+    plt.legend(['Observed', 'Predicted'], fontsize=18)
     plt.margins(x=0.05)
 
     st.pyplot(plt)
