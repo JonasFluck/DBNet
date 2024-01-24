@@ -15,7 +15,11 @@ cmap = LinearSegmentedColormap.from_list("blue_to_orange", colors)
 custom_colors = [cmap(i) for i in np.linspace(0, 1, len(index))]
 cmap = LinearColormap(custom_colors, index=index, vmin=0, vmax=1)
 
-def create_map(gdf, map_type):
+def create_map(gdf, map_type, ids=None, state_ids=None):
+    if (state_ids):
+        gdf = gdf[gdf['state_id'].isin(state_ids)]
+    if(ids):
+        gdf = gdf[gdf['id'].isin(ids)]
     if map_type == MapTypes.KNN:
         return create_map_knn(gdf)
     elif map_type == MapTypes.Stability:
@@ -65,6 +69,7 @@ def create_map_with_stability(gdf):
 
 
 def create_map_with_ids_new(gdf):
+    print(gdf['id'].values)
     color_dict = {id: get_random_color() for id in gdf['id'].unique()}
     m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
                    min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
@@ -175,46 +180,3 @@ def create_map_for_gauss(gdf):
     cmap.add_to(m)
 
     return m._repr_html_()
-def filter_data_by_geometry(json_data, statenumbers, forexp=False):
-    if forexp:
-        with open('../data/2_hoch.geo.json') as f:
-            data = json.load(f)
-    else:
-        # Load the GeoJSON file
-        with open('./data/2_hoch.geo.json') as f:
-            data = json.load(f)
-
-    bundeslaender = ['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thüringen']
-
-    # Create a dictionary that maps each state to a unique ID
-    bundesland_to_id = {bundesland: i for i, bundesland in enumerate(bundeslaender)}
-
-    filtered_features = []
-
-    for statenumber in statenumbers:
-        # Filter the features to keep only the ones with the current ID
-        current_features = [feature for feature in data['features'] if feature['id'] == statenumber]
-
-        # Check if there is a feature with the current ID
-        if not current_features:
-            raise ValueError(f"No feature with the ID {statenumber} found")
-
-        # Get the geometry of the first feature
-        geometry = current_features[0]['geometry']
-
-        # Create a shapely shape from the geometry
-        shape_geometry = shape(geometry)
-
-        # Filter json_data to keep only the features that intersect with the shape_geometry
-        intersecting_features = [feature for feature in json_data['features'] if shape_geometry.intersects(LineString(feature['geometry']['coordinates']))]
-
-        # Add the state ID to each intersecting feature
-        for feature in intersecting_features:
-            feature['properties']['state_id'] = statenumber
-
-        filtered_features.extend(intersecting_features)
-
-    # Replace the features in json_data with the filtered features
-    json_data['features'] = filtered_features
-
-    return json_data

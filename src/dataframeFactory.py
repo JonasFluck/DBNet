@@ -1,6 +1,6 @@
 import geopandas as gpd
 
-def get_data_frame(json_data, ids = None):
+def get_data_frame(json_data):
     _id = 0
     last_coordinate = None
 
@@ -22,10 +22,5 @@ def get_data_frame(json_data, ids = None):
 
     # Set the CRS
     gdf.set_crs(epsg=4326, inplace=True)
-    
-
-    if(ids == None):
-        return gdf
-    else:
-        return gdf[gdf['id'].isin(ids)]
+    return gdf
     

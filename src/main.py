@@ -6,15 +6,14 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import scipy.stats  
-from mapCreator import filter_data_by_geometry
 from mainController import MainController
 from MapTypes import MapTypes
 from scipy.interpolate import UnivariateSpline
 
 # Load the JSON data from a file    
-with open('./data/db.json') as f:
+with open('./data/output2.json', 'r', encoding='utf-8') as f:
     json_data = json.load(f)
-
+mainController = MainController(json_data)
 bundeslaender = ['Baden-Wuerttemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thueringen']
 
 # Create a dictionary that maps each state to a unique ID
@@ -28,10 +27,6 @@ choosen_states_ids = [bundesland_to_id[bundesland] for bundesland in choosen_sta
 
 special_ids = None
 
-#If no state is selected show all
-if choosen_states:
-    json_data = filter_data_by_geometry(json_data, choosen_states_ids)
-    
 checkbox_specific_ids = st.checkbox("Select specific tracks by ID")
 if checkbox_specific_ids:
     special_ids_input = st.text_input("Enter Special IDs (comma-separated)")
@@ -45,7 +40,6 @@ if checkbox_specific_ids:
         st.error(f"Error: {e}")
         st.stop()
 # declare here to not throw errors later
-mainController = MainController()
 
 # Create radio buttons in the sidebar
 option = st.sidebar.radio(
@@ -54,17 +48,17 @@ option = st.sidebar.radio(
 
 # Display a different map depending on the selected option
 if option == 'Map with id':
-    mainController.setData(json_data,MapTypes.ID, special_ids) 
+    mainController.setMap(MapTypes.ID,special_ids, choosen_states_ids)
 elif option == 'Map with knn':
-    mainController.setData(json_data,MapTypes.KNN, special_ids)
+    mainController.setMap(MapTypes.KNN, special_ids, choosen_states_ids)
 elif option == 'Map with stability':
-    mainController.setData(json_data,MapTypes.Stability, special_ids)
+    mainController.setMap(MapTypes.Stability, special_ids, choosen_states_ids)
 elif option == 'Map with Gauss': 
-    mainController.setData(json_data,MapTypes.Gauss, special_ids)
+    mainController.setMap(MapTypes.Gauss, special_ids, choosen_states_ids)
 if option == "Map with stability":
     checkbox_selected = st.checkbox("Show tracks with no measuremnts")
     if checkbox_selected:
-        mainController.setData(json_data,MapTypes.StabilityWithEmptyMeasures, special_ids)
+        mainController.setMap(MapTypes.StabilityWithEmptyMeasures, special_ids, choosen_states_ids)
 
 with st.container():
     components.html(mainController.map, height=500, width=900)
