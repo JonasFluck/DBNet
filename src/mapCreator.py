@@ -102,7 +102,7 @@ def create_map_knn(gdf):
                    },
                    tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements'])
                    ).add_to(m)
-    
+
     # Add the predicted values to the map
     folium.GeoJson(gdf[gdf['all_measurements'] == 0],
                    style_function=lambda feature: {
@@ -166,16 +166,23 @@ def create_map_for_gauss(gdf):
                        'weight': 3,
                        'fillOpacity': 0.6
                    },
-                   tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id', 'uncertainty','t-mobile_stability','t-mobile_uncertainty', 'vodafone_stability','vodafone_uncertainty', 'o2_stability','o2_uncertainty', 'e-plus_stability','e-plus_uncertainty'])
+                   tooltip=folium.GeoJsonTooltip(
+                       fields=['all_stability', 'all_measurements', 'id', 'uncertainty', 't-mobile_stability',
+                               't-mobile_uncertainty', 'vodafone_stability', 'vodafone_uncertainty', 'o2_stability',
+                               'o2_uncertainty', 'e-plus_stability', 'e-plus_uncertainty'])
                    ).add_to(m)
     cmap.caption = "Stability"
     cmap.add_to(m)
 
     return m._repr_html_()
-def filter_data_by_geometry(json_data, statenumbers):
-    # Load the GeoJSON file
-    with open('./data/2_hoch.geo.json') as f:
-        data = json.load(f)
+def filter_data_by_geometry(json_data, statenumbers, forexp=False):
+    if forexp:
+        with open('../data/2_hoch.geo.json') as f:
+            data = json.load(f)
+    else:
+        # Load the GeoJSON file
+        with open('./data/2_hoch.geo.json') as f:
+            data = json.load(f)
 
     bundeslaender = ['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thüringen']
 

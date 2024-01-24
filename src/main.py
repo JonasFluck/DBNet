@@ -4,7 +4,6 @@ import streamlit.components.v1 as components
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import seaborn as sns
 from sklearn.linear_model import LinearRegression
 import scipy.stats  
 from mapCreator import filter_data_by_geometry
