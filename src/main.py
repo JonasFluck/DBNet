@@ -113,7 +113,7 @@ if 'uncertainty' in mainController.dto.gdf.columns:
             checkbox_state_gauss = st.checkbox("show average stability of predictions")
 
         providers = ['vodafone', 'e-plus', 'o2', 't-mobile']
-        colors = ['#E60000', '#00FF00', '#00529c', '#D70270']
+        colors = ['#DF0000', '#2f663e', '#042469', '#E30075']
         provider_colors = dict(zip(providers, colors))
         observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
         average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
