@@ -60,8 +60,8 @@ if option == "Map with stability":
         mainController.setData(json_data,MapTypes.StabilityWithEmptyMeasures, special_ids)
 with st.container():
     components.html(mainController.map, height=500, width=900)
-attributes = ['t-mobile', 'vodafone', 'o2', 'e-plus']
-colors = ['blue', 'orange', 'green', 'purple']  # Specify as many colors as attributes
+attributes = ['vodafone', 'e-plus', 'o2', 't-mobile']
+colors = ['#DF0000', '#2f663e', '#042469', '#E30075']
 
 fig, axs = plt.subplots(2, 2, figsize=(20, 20))  # Create 2 subplots side by side
 if 'uncertainty' in mainController.dto.gdf.columns:
@@ -171,6 +171,7 @@ if 'uncertainty' in mainController.dto.gdf.columns:
     #plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
     
     st.pyplot(plt)
+    
     if 'uncertainty' in mainController.dto.gdf.columns:
         checkbox_subsample = st.checkbox("Show subsample of every 100th datapoint")
         if checkbox_subsample:
@@ -193,16 +194,17 @@ if 'uncertainty' in mainController.dto.gdf.columns:
                             subsample['all_stability'] + 1.96 * subsample['uncertainty'],
                             color='orange', alpha=0.2, label='Uncertainty')
 
-        plt.ylim(0, 1.4)
+        plt.ylim(0, 1)  # Set y-axis limits from 0 to 1
         plt.yticks(np.arange(0, 1.1, 0.2), fontsize=18)  # Set font size for y-ticks
-
         plt.title('Stability of Predictions with 95% Confidence Interval', fontsize=18)  # Set font size for title
         plt.xlabel('Index', fontsize=18)  # Set font size for x-label
         plt.ylabel('Stability', fontsize=18)  # Set font size for y-label
 
         plt.tick_params(axis='both', which='major', labelsize=18)  # Set font size for tick labels
 
+        plt.ylim(0, 1.1)  # Set y-axis limits from 0 to 1.1
+
         plt.legend(fontsize=18)
         plt.margins(x=0.05)
-        # plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
-        st.pyplot(plt)
+# plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
+st.pyplot(plt)
