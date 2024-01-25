@@ -20,8 +20,6 @@ def create_map(gdf, map_type, ids=None, state_ids=None):
         gdf = gdf[gdf['state_id'].isin(state_ids)]
     if(ids):
         gdf = gdf[gdf['id'].isin(ids)]
-    if map_type == MapTypes.KNN:
-        return create_map_knn(gdf)
     elif map_type == MapTypes.Stability:
         return create_map_with_stability(gdf)
     elif map_type == MapTypes.ID:
@@ -87,45 +85,6 @@ def create_map_with_ids_new(gdf):
                    },
                    tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements', 'id'])
                    ).add_to(m)
-    return m._repr_html_()
-
-def create_map_knn(gdf):
-    m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
-                   min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
-
-    # Add the actual measurements to the map
-    folium.GeoJson(gdf[gdf['all_measurements'] != 0],
-                   style_function=lambda feature: {
-                       'color': cmap(feature['properties']['all_stability']) if not pd.isna(
-                           feature['properties']['all_stability']) else 'purple',
-                       'weight': 2,
-                       'fillOpacity': 0.6
-                   },
-                   highlight_function=lambda feature: {
-                       'weight': 3,
-                       'fillOpacity': 0.6
-                   },
-                   tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements'])
-                   ).add_to(m)
-
-    # Add the predicted values to the map
-    folium.GeoJson(gdf[gdf['all_measurements'] == 0],
-                   style_function=lambda feature: {
-                       'color': cmap(feature['properties']['all_stability']) if not pd.isna(
-                           feature['properties']['all_stability']) else 'purple',
-                       'weight': 4,  # Increase the weight of the lines
-                       'fillOpacity': 0.6,
-                       'dashArray': '10, 10'  # Increase the length of the dashes
-                   },
-                   highlight_function=lambda feature: {
-                       'weight': 4,
-                       'fillOpacity': 0.6
-                   },
-                   tooltip=folium.GeoJsonTooltip(fields=['all_stability', 'all_measurements'])
-                   ).add_to(m)
-
-    cmap.caption = "Stability"
-    cmap.add_to(m)
     return m._repr_html_()
 
 def create_map_stability_with_empty(gdf):

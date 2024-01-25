@@ -11,7 +11,7 @@ from MapTypes import MapTypes
 from scipy.interpolate import UnivariateSpline
 
 # Load the JSON data from a file    
-with open('./data/output2.json', 'r', encoding='utf-8') as f:
+with open('./data/output_matern_20_80.json', 'r', encoding='utf-8') as f:
     json_data = json.load(f)
 mainController = MainController(json_data)
 bundeslaender = ['Baden-Wuerttemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thueringen']
@@ -44,13 +44,11 @@ if checkbox_specific_ids:
 # Create radio buttons in the sidebar
 option = st.sidebar.radio(
     'Select a map',
-    ('Map with id', 'Map with knn', 'Map with stability', 'Map with Gauss'))
+    ('Map with id', 'Map with stability', 'Map with Gauss'))
 
 # Display a different map depending on the selected option
 if option == 'Map with id':
     mainController.setMap(MapTypes.ID,special_ids, choosen_states_ids)
-elif option == 'Map with knn':
-    mainController.setMap(MapTypes.KNN, special_ids, choosen_states_ids)
 elif option == 'Map with stability':
     mainController.setMap(MapTypes.Stability, special_ids, choosen_states_ids)
 elif option == 'Map with Gauss': 
@@ -62,17 +60,26 @@ if option == "Map with stability":
 
 with st.container():
     components.html(mainController.map, height=500, width=900)
+
+
 attributes = ['t-mobile', 'vodafone', 'o2', 'e-plus']
 colors = ['blue', 'orange', 'green', 'purple']  # Specify as many colors as attributes
+filtered_data = mainController.dto.gdf.copy()
+if(mainController.map_type != MapTypes.Gauss):
+    filtered_data.drop('uncertainty', axis=1, inplace=True)
+if(choosen_states_ids):
+    filtered_data = filtered_data[filtered_data['state_id'].isin(choosen_states_ids)]
+if(special_ids):
+    filtered_data = filtered_data[filtered_data['id'].isin(special_ids)]    
 
 fig, axs = plt.subplots(2, 2, figsize=(20, 20))  # Create 2 subplots side by side
-if 'uncertainty' in mainController.dto.gdf.columns:
+if 'uncertainty' in filtered_data.columns:
     checkbox_provider_gauss = st.checkbox("Estimate missing data points for providers")
 for i, (attr, color) in enumerate(zip(attributes, colors)):
-    filtered = mainController.dto.gdf[(mainController.dto.gdf[attr+'_measurements']!=0)]
-    if 'uncertainty' in mainController.dto.gdf.columns:
+    filtered = filtered_data[(filtered_data[attr+'_measurements']!=0)]
+    if 'uncertainty' in filtered_data.columns:
         if checkbox_provider_gauss:
-            filtered = mainController.dto.gdf
+            filtered = filtered_data
     axs[i // 2, i % 2].plot(filtered.index, filtered[attr+'_stability'], marker='o', markersize=4, label=attr, color=color)
     axs[i // 2, i % 2].set_title('Network stability of ' + attr)
     axs[i // 2, i % 2].set_xlabel('Index of track')
@@ -86,10 +93,10 @@ st.pyplot(fig)
 for provider, average in mainController.dto.avg_providers.items():
     st.write(f"The average stability for {provider} is: {format(average, '.2f')}")
 
-if 'uncertainty' in mainController.dto.gdf.columns:
+if 'uncertainty' in filtered_data.columns:
     # Plot of the datapoints differentiated by whether they were observed or predicted
-    observed = mainController.dto.gdf[mainController.dto.gdf['uncertainty'].isnull()]
-    predicted = mainController.dto.gdf[mainController.dto.gdf['uncertainty'].isnull()==False]
+    observed = filtered_data[filtered_data['uncertainty'].isnull()]
+    predicted = filtered_data[filtered_data['uncertainty'].isnull()==False]
     data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
 
     plt.figure(figsize=(10, 5))
@@ -108,24 +115,24 @@ if 'uncertainty' in mainController.dto.gdf.columns:
     plt.figure(figsize=(10, 6))  # Increase the size of the plot
     # Data preparation
     if(choosen_states_ids):
-        if 'uncertainty' in mainController.dto.gdf.columns:
+        if 'uncertainty' in filtered_data.columns:
             checkbox_state_gauss = st.checkbox("show average stability of predictions")
 
         providers = ['vodafone', 'e-plus', 'o2', 't-mobile']
         colors = ['#E60000', '#00FF00', '#00529c', '#D70270']
         provider_colors = dict(zip(providers, colors))
-        observed = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']!=0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+        observed = filtered_data[(filtered_data['all_measurements']!=0) & (filtered_data['state_id'].isin(choosen_states_ids))]
         average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
-        if 'uncertainty' in mainController.dto.gdf.columns and checkbox_state_gauss:
-            average_stability_providers = {provider: mainController.dto.gdf.groupby('state_id')[provider+'_stability'].mean() for provider in providers}
+        if 'uncertainty' in filtered_data.columns and checkbox_state_gauss:
+            average_stability_providers = {provider: filtered_data.groupby('state_id')[provider+'_stability'].mean() for provider in providers}
         else:
             average_stability_providers = {
-                provider: mainController.dto.gdf[mainController.dto.gdf[provider+'_measurements'] != 0].groupby('state_id')[provider+'_stability'].mean() 
+                provider: filtered_data[filtered_data[provider+'_measurements'] != 0].groupby('state_id')[provider+'_stability'].mean() 
                 for provider in providers
             }
-        if 'uncertainty' in mainController.dto.gdf.columns:
+        if 'uncertainty' in filtered_data.columns:
             if checkbox_state_gauss:
-                predicted = mainController.dto.gdf[(mainController.dto.gdf['all_measurements']==0) & (mainController.dto.gdf['state_id'].isin(choosen_states_ids))]
+                predicted = filtered_data[(filtered_data['all_measurements']==0) & (filtered_data['state_id'].isin(choosen_states_ids))]
                 average_stability_predicted = predicted.groupby('state_id')['all_stability'].mean()
             # Plotting
         # Define the spacing
@@ -144,7 +151,7 @@ if 'uncertainty' in mainController.dto.gdf.columns:
         for i in range(len(choosen_states_ids)):
             if choosen_states_ids[i] in average_stability_observed:
                 plt.scatter(average_stability_observed[choosen_states_ids[i]]*100, i*(len(providers)), color='grey', s=100, zorder=2)
-            if 'uncertainty' in mainController.dto.gdf.columns:
+            if 'uncertainty' in filtered_data.columns:
                 if checkbox_state_gauss and choosen_states_ids[i] in average_stability_predicted:
                     plt.scatter(average_stability_predicted[choosen_states_ids[i]]*100, i*(len(providers))+inner_spacing, color='grey', s=100, zorder=2)
             for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
@@ -163,34 +170,37 @@ if 'uncertainty' in mainController.dto.gdf.columns:
         plt.grid(True, axis='x', color='black', linewidth=1, alpha=0.2)
 
     st.pyplot(plt)
-    if 'uncertainty' in mainController.dto.gdf.columns:
+    if 'uncertainty' in filtered_data.columns:
         checkbox_subsample = st.checkbox("Show subsample of every 100th datapoint")
         if checkbox_subsample:
-            subsample = mainController.dto.gdf.iloc[::100]
+            subsample = filtered_data.iloc[::100]
         else:
-            subsample = mainController.dto.gdf.copy()
+            subsample = filtered_data.copy()
         subsample['uncertainty'].fillna(0, inplace=True)
         # Plot of the datapoints differentiated by whether they were observed or predicted
-        observed = subsample[subsample['uncertainty']==0]
-        predicted = subsample[subsample['uncertainty']!=0]
+        observed = subsample[subsample['all_measurements']!=0]
+        predicted = subsample[subsample['all_measurements']==0]
 
         data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
 
         plt.figure(figsize=(10, 5))
-        plt.scatter(observed.index, observed['all_stability'], color='blue', label='Observed', s=20)
-        plt.scatter(predicted.index, predicted['all_stability'], color='orange', label='Predicted', s=20)
+        #plt.scatter(observed['index'], observed['all_stability'], color='blue', label='Observed', s=20)
+        #plt.scatter(predicted['index'], predicted['all_stability'], color='orange', label='Predicted', s=20)
 
+        data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
+        plt.scatter(data[data['all_measurements']!=0].index, data[data['all_measurements']!=0]['all_stability'], color='blue', label='Observed', s=3)
+        plt.scatter(data[data['all_measurements']==0].index, data[data['all_measurements']==0]['all_stability'], color='orange', label='Predicted', s=3)
 
         # Überprüfen Sie, ob es nicht leere Daten in der 'uncertainty'-Spalte gibt, bevor Sie das Konfidenzintervall plotten
         if 'uncertainty' in subsample.columns and pd.api.types.is_numeric_dtype(subsample['uncertainty']):
             # Schattierung basierend auf Unsicherheit
-            plt.fill_between(subsample.index,
-                            subsample['all_stability'] - 1.96 * subsample['uncertainty'],
-                            subsample['all_stability'] + 1.96 * subsample['uncertainty'],
+            plt.fill_between(data.index,
+                            data['all_stability'] - 1.96 * data['uncertainty'],
+                            data['all_stability'] + 1.96 * data['uncertainty'],
                             color='orange', alpha=0.2, label='Uncertainty')
 
-        plt.ylim(0, 1.4)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
-        plt.yticks(np.arange(0, 1.1, 0.2))  # Setzt die y-Ticks in Schritten von 0,2
+        plt.ylim(0.5, 1)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
+        #plt.yticks(np.arange(0, 1.1, 0.2))  # Setzt die y-Ticks in Schritten von 0,2
 
         plt.title('Stability of Predictions with 95% Confidence Interval')
         plt.xlabel('Index')

@@ -1,7 +1,6 @@
 from MapTypes import MapTypes
 from dataDto import DataDto
 from dataframeFactory import get_data_frame
-from predictionHelper import add_predictions_gauss_regr, add_predictions_knn
 from mapCreator import create_map
 
 
