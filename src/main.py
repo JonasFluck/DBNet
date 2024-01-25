@@ -15,16 +15,9 @@ with open('./data/output_matern_20_80.json', 'r', encoding='utf-8') as f:
     json_data = json.load(f)
 mainController = MainController(json_data)
 bundeslaender = ['Baden-Wuerttemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thueringen']
-
-# Create a dictionary that maps each state to a unique ID
 bundesland_to_id = {bundesland: i for i, bundesland in enumerate(bundeslaender)}
-
-
 choosen_states = st.multiselect("Choose a country state:", bundeslaender, default=["Baden-Wuerttemberg"])
-
-# Get the IDs of the selected states
 choosen_states_ids = [bundesland_to_id[bundesland] for bundesland in choosen_states]
-
 special_ids = None
 
 checkbox_specific_ids = st.checkbox("Select specific tracks by ID")
@@ -81,11 +74,12 @@ for i, (attr, color) in enumerate(zip(attributes, colors)):
         if checkbox_provider_gauss:
             filtered = filtered_data
     axs[i // 2, i % 2].plot(filtered.index, filtered[attr+'_stability'], marker='o', markersize=4, label=attr, color=color)
-    axs[i // 2, i % 2].set_title('Network stability of ' + attr)
-    axs[i // 2, i % 2].set_xlabel('Index of track')
-    axs[i // 2, i % 2].set_ylabel('Stability')
-    axs[i // 2, i % 2].legend()
+    axs[i // 2, i % 2].set_title('Network stability of ' + attr, fontsize=18)
+    axs[i // 2, i % 2].set_xlabel('Index of track', fontsize=18)
+    axs[i // 2, i % 2].set_ylabel('Stability', fontsize=18)
+    axs[i // 2, i % 2].legend(fontsize=18)
     axs[i // 2, i % 2].margins(x=0.05)
+    axs[i // 2, i % 2].tick_params(axis='both', which='major', labelsize=18) 
 
 plt.tight_layout()
 st.pyplot(fig)
@@ -103,10 +97,12 @@ if 'uncertainty' in filtered_data.columns:
     plt.scatter(data[data['uncertainty'].isnull()].index, data[data['uncertainty'].isnull()]['all_stability'], color='blue', label='Observed', s=3)
     plt.scatter(data[data['uncertainty'].notnull()].index, data[data['uncertainty'].notnull()]['all_stability'], color='orange', label='Predicted', s=3)
     
-    plt.title('Stability of Predictions')
-    plt.xlabel('Index')
-    plt.ylabel('Stability')
-    plt.legend(['Observed', 'Predicted'])
+    plt.xlabel('Index', fontsize=18)  # Set font size for x-label
+    plt.ylabel('Stability', fontsize=18)  # Set font size for y-label
+
+    plt.tick_params(axis='both', which='major', labelsize=18)  # Set font size for tick labels
+
+    plt.legend(['Observed', 'Predicted'], fontsize=18)
     plt.margins(x=0.05)
 
     st.pyplot(plt)
@@ -119,7 +115,7 @@ if 'uncertainty' in filtered_data.columns:
             checkbox_state_gauss = st.checkbox("show average stability of predictions")
 
         providers = ['vodafone', 'e-plus', 'o2', 't-mobile']
-        colors = ['#E60000', '#00FF00', '#00529c', '#D70270']
+        colors = ['#DF0000', '#2f663e', '#042469', '#E30075']
         provider_colors = dict(zip(providers, colors))
         observed = filtered_data[(filtered_data['all_measurements']!=0) & (filtered_data['state_id'].isin(choosen_states_ids))]
         average_stability_observed = observed.groupby('state_id')['all_stability'].mean()
@@ -140,12 +136,12 @@ if 'uncertainty' in filtered_data.columns:
         outer_spacing = 0.5  # Decrease the space between the states
         # Draw the lines
         for i in range(len(choosen_states_ids)):
-            plt.hlines(y=i*(len(providers)), xmin=0, xmax=average_stability_observed[choosen_states_ids[i]]*100, color='#2F4F4F', linewidth=5, label='Observed' if i == 0 else "")
+            plt.hlines(y=i*(len(providers)), xmin=0, xmax=average_stability_observed[choosen_states_ids[i]]*100, color='#2F4F4F', linewidth=8, label='Observed' if i == 0 else "")
             if 'uncertainty' in mainController.dto.gdf.columns:
                 if checkbox_state_gauss and choosen_states_ids[i] in average_stability_predicted.index:
-                    plt.hlines(y=i*(len(providers))+inner_spacing, xmin=0, xmax=average_stability_predicted[choosen_states_ids[i]]*100, color='#D3D3D3', linewidth=5, label='Predicted' if i == 0 else "")
+                    plt.hlines(y=i*(len(providers))+inner_spacing, xmin=0, xmax=average_stability_predicted[choosen_states_ids[i]]*100, color='#D3D3D3', linewidth=8, label='Predicted' if i == 0 else "")
             for j, (provider, average_stability) in enumerate(average_stability_providers.items()):
-                plt.hlines(y=i*(len(providers))+inner_spacing*(j+2), xmin=0, xmax=average_stability[choosen_states_ids[i]]*100, color=provider_colors[provider], linewidth=5, label=provider if i == 0 else "")
+                plt.hlines(y=i*(len(providers))+inner_spacing*(j+2), xmin=0, xmax=average_stability[choosen_states_ids[i]]*100, color=provider_colors[provider], linewidth=8, label=provider if i == 0 else "")
 
         # Add a circle at the end of each line
         for i in range(len(choosen_states_ids)):
@@ -159,16 +155,24 @@ if 'uncertainty' in filtered_data.columns:
                     plt.scatter(average_stability[choosen_states_ids[i]]*100, i*(len(providers))+inner_spacing*(j+2), color='grey', s=100, zorder=2)
         # Set y-ticks and x-limits
         id_to_bundesland = {i: bundesland for bundesland, i in bundesland_to_id.items()}
-        plt.yticks(range(2, len(choosen_states_ids)*(len(providers)), len(providers)), [id_to_bundesland[i] for i in choosen_states_ids], fontsize=14)
-        plt.xticks(fontsize=12)
+        plt.yticks(np.arange(1, len(choosen_states_ids)*(len(providers)), len(providers)), [id_to_bundesland[i] for i in choosen_states_ids], fontsize=18)
+        plt.xticks(fontsize=18)
         plt.xlim(50, 100)  
     
 
-        plt.xlabel('Average Stability (%)', fontsize=14)
-        legend = plt.legend(fontsize=12, loc='upper right', bbox_to_anchor=(1.25, 1.01))
-        legend.get_frame().set_edgecolor('black')
+        plt.xlabel('Average Stability (%)', fontsize=18)
+        # Shrink current axis's height by 10% on the bottom
+        
+        # Shrink current axis's height by 10% on the bottom
+        box = plt.gca().get_position()
+        plt.gca().set_position([box.x0, box.y0 + box.height * 0.2, box.width, box.height * 0.8])
+
+        # Put a legend below current axis
+        legend = plt.legend(fontsize=18, loc='upper center', bbox_to_anchor=(0.5,0.15), bbox_transform=plt.gcf().transFigure, ncol=3, fancybox=True, shadow=True)    
         plt.grid(True, axis='x', color='black', linewidth=1, alpha=0.2)
 
+    #plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
+    
     st.pyplot(plt)
     if 'uncertainty' in filtered_data.columns:
         checkbox_subsample = st.checkbox("Show subsample of every 100th datapoint")
@@ -207,5 +211,5 @@ if 'uncertainty' in filtered_data.columns:
         plt.ylabel('Stability')
         plt.legend()
         plt.margins(x=0.05)
-
-        st.pyplot(plt)
+# plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
+st.pyplot(plt)
