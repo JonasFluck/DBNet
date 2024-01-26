@@ -10,11 +10,13 @@ from mainController import MainController
 from MapTypes import MapTypes
 from scipy.interpolate import UnivariateSpline
 
+plt.rcParams['font.size'] = 18
+bundeslaender = ['Baden-Wuerttemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thueringen']
+
 # Load the JSON data from a file    
-with open('./data/output_matern_20_80.json', 'r', encoding='utf-8') as f:
+with open('./data/output_rbf_20_80.json', 'r', encoding='utf-8') as f:
     json_data = json.load(f)
 mainController = MainController(json_data)
-bundeslaender = ['Baden-Wuerttemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thueringen']
 bundesland_to_id = {bundesland: i for i, bundesland in enumerate(bundeslaender)}
 choosen_states = st.multiselect("Choose a country state:", bundeslaender, default=["Baden-Wuerttemberg"])
 choosen_states_ids = [bundesland_to_id[bundesland] for bundesland in choosen_states]
@@ -32,6 +34,7 @@ if checkbox_specific_ids:
     except ValueError as e:
         st.error(f"Error: {e}")
         st.stop()
+
 # declare here to not throw errors later
 
 # Create radio buttons in the sidebar
@@ -82,7 +85,10 @@ for i, (attr, color) in enumerate(zip(attributes, colors)):
     axs[i // 2, i % 2].tick_params(axis='both', which='major', labelsize=18) 
 
 plt.tight_layout()
+
 st.pyplot(fig)
+if(st.button('Save this plot as image', key=1)):
+    plt.savefig("provider_overview.pdf", format='pdf')
 
 for provider, average in mainController.dto.avg_providers.items():
     st.write(f"The average stability for {provider} is: {format(average, '.2f')}")
@@ -104,8 +110,9 @@ if 'uncertainty' in filtered_data.columns:
 
     plt.legend(['Observed', 'Predicted'], fontsize=18)
     plt.margins(x=0.05)
-
     st.pyplot(plt)
+    if(st.button('Save this plot as image', key = 2)):
+        plt.savefig("scatter_overview.pdf", format='pdf')
     
     # Plotting
     plt.figure(figsize=(10, 6))  # Increase the size of the plot
@@ -170,10 +177,13 @@ if 'uncertainty' in filtered_data.columns:
         # Put a legend below current axis
         legend = plt.legend(fontsize=18, loc='upper center', bbox_to_anchor=(0.5,0.15), bbox_transform=plt.gcf().transFigure, ncol=3, fancybox=True, shadow=True)    
         plt.grid(True, axis='x', color='black', linewidth=1, alpha=0.2)
+        
+        st.pyplot(plt)
+        if(st.button('Save this plot as image', key = 3)):
+            plt.savefig("provider_comparison.pdf", format='pdf')
 
     #plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
     
-    st.pyplot(plt)
     if 'uncertainty' in filtered_data.columns:
         checkbox_subsample = st.checkbox("Show subsample of every 100th datapoint")
         if checkbox_subsample:
@@ -208,8 +218,10 @@ if 'uncertainty' in filtered_data.columns:
 
         plt.title('Stability of Predictions with 95% Confidence Interval')
         plt.xlabel('Index')
-        plt.ylabel('Stability')
+        plt.ylabel('Stability', fontsize=18)
         plt.legend()
         plt.margins(x=0.05)
+        st.pyplot(plt)
+        if(st.button('Save this plot as image', key = 4)):
+            plt.savefig("gauss.pdf", format='pdf')
 # plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
-st.pyplot(plt)

@@ -25,7 +25,7 @@ class MainController:
         self._mapType = None
     
     def setMap(self,map_type= None, ids= None, state_ids = None):
-        print(self._dto.gdf['id'].values)
+        print('we are here')
         self._mapType = map_type
         self._map = create_map(self._dto.gdf, self.map_type, ids, state_ids)
         

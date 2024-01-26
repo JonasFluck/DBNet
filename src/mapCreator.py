@@ -20,7 +20,7 @@ def create_map(gdf, map_type, ids=None, state_ids=None):
         gdf = gdf[gdf['state_id'].isin(state_ids)]
     if(ids):
         gdf = gdf[gdf['id'].isin(ids)]
-    elif map_type == MapTypes.Stability:
+    if map_type == MapTypes.Stability:
         return create_map_with_stability(gdf)
     elif map_type == MapTypes.ID:
         return create_map_with_ids_new(gdf)
@@ -62,12 +62,12 @@ def create_map_with_stability(gdf):
     # Add the colormap to the map as a legend
     cmap.caption = "Stability"
     cmap.add_to(m)
+    print('done')
 
     return m._repr_html_()
 
 
 def create_map_with_ids_new(gdf):
-    print(gdf['id'].values)
     color_dict = {id: get_random_color() for id in gdf['id'].unique()}
     m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
                    min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
