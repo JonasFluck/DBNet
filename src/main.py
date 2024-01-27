@@ -197,6 +197,29 @@ if 'uncertainty' in filtered_data.columns:
         plt.scatter(data[data['all_measurements']==0].index, data[data['all_measurements']==0]['all_stability'], color='orange', label='Predicted', s=3)
 
         # Überprüfen Sie, ob es nicht leere Daten in der 'uncertainty'-Spalte gibt, bevor Sie das Konfidenzintervall plotten
+        
+    if 'uncertainty' in filtered_data.columns:
+        checkbox_subsample = st.checkbox("Show subsample of every 100th datapoint")
+        if checkbox_subsample:
+            subsample = filtered_data.iloc[::50]
+        else:
+            subsample = filtered_data.copy()
+        subsample['uncertainty'].fillna(0, inplace=True)
+        # Plot of the datapoints differentiated by whether they were observed or predicted
+        observed = subsample[subsample['all_measurements']!=0]
+        predicted = subsample[subsample['all_measurements']==0]
+
+        data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
+
+        plt.figure(figsize=(10, 5))
+        #plt.scatter(observed['index'], observed['all_stability'], color='blue', label='Observed', s=20)
+        #plt.scatter(predicted['index'], predicted['all_stability'], color='orange', label='Predicted', s=20)
+
+        data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
+        plt.scatter(data[data['all_measurements']!=0].index, data[data['all_measurements']!=0]['all_stability'], color='blue', label='Observed', s=3)
+        plt.scatter(data[data['all_measurements']==0].index, data[data['all_measurements']==0]['all_stability'], color='orange', label='Predicted', s=3)
+        plt.axhline(y=1, color='lightgrey', linestyle='--')
+        # Überprüfen Sie, ob es nicht leere Daten in der 'uncertainty'-Spalte gibt, bevor Sie das Konfidenzintervall plotten
         if 'uncertainty' in subsample.columns and pd.api.types.is_numeric_dtype(subsample['uncertainty']):
             # Schattierung basierend auf Unsicherheit
             plt.fill_between(data.index,
@@ -204,16 +227,17 @@ if 'uncertainty' in filtered_data.columns:
                             data['all_stability'] + 1.96 * data['uncertainty'],
                             color='orange', alpha=0.2, label='Uncertainty')
 
-        plt.ylim(0.4, 1.2)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
-        plt.yticks(np.arange(0, 1.1, 0.2))  # Setzt die y-Ticks in Schritten von 0,2
-
+        plt.ylim(0.3, 1.3)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
+        plt.yticks(np.arange(0.6, 1.05, 0.2))  # Set the y-ticks in steps of 0.1 from 0.5 to 1.0
         plt.title('Stability of Predictions with 95% Confidence Interval')
         plt.xlabel('Index')
-        plt.ylabel('Stability', fontsize=18)
+        plt.ylabel('Stability', fontsize=19)
         plt.legend()
-        plt.axhline(y=1, color='lightgrey', linestyle='--')
         plt.margins(x=0.05)
         st.pyplot(plt)
         if(st.button('Save this plot as image', key = 4)):
+            plt.tight_layout()
             plt.savefig("gauss.pdf", format='pdf')
 # plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
+
+
