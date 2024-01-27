@@ -4,16 +4,12 @@ def get_data_frame(json_data):
     _id = 0
     last_coordinate = None
 
-    # Iterate over the features
     for feature in json_data['features']:
-        # If the feature starts with the same coordinate as the last feature ended, assign the same id
         if last_coordinate is not None and feature['geometry']['coordinates'][0] == last_coordinate:
             feature['properties']['id'] = _id
         else:
-            # Otherwise, increment the id and assign it to the feature
             _id += 1
             feature['properties']['id'] = _id
-
         # Update the last coordinate
         last_coordinate = feature['geometry']['coordinates'][-1]
 

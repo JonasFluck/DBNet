@@ -35,9 +35,6 @@ if checkbox_specific_ids:
         st.error(f"Error: {e}")
         st.stop()
 
-# declare here to not throw errors later
-
-# Create radio buttons in the sidebar
 option = st.sidebar.radio(
     'Select a map',
     ('Map with id', 'Map with stability', 'Map with Gauss'))
@@ -134,11 +131,10 @@ if 'uncertainty' in filtered_data.columns:
             if checkbox_state_gauss:
                 predicted = filtered_data[(filtered_data['all_measurements']==0) & (filtered_data['state_id'].isin(choosen_states_ids))]
                 average_stability_predicted = predicted.groupby('state_id')['all_stability'].mean()
-            # Plotting
         # Define the spacing
         inner_spacing = 0.5
-        outer_spacing = 0.5  # Decrease the space between the states
-        # Draw the lines
+        outer_spacing = 0.5  
+
         for i in range(len(choosen_states_ids)):
             plt.hlines(y=i*(len(providers)), xmin=0, xmax=average_stability_observed[choosen_states_ids[i]]*100, color='#2F4F4F', linewidth=8, label='Observed' if i == 0 else "")
             if 'uncertainty' in mainController.dto.gdf.columns:
@@ -165,9 +161,7 @@ if 'uncertainty' in filtered_data.columns:
     
 
         plt.xlabel('Average Stability (%)', fontsize=18)
-        # Shrink current axis's height by 10% on the bottom
-        
-        # Shrink current axis's height by 10% on the bottom
+
         box = plt.gca().get_position()
         plt.gca().set_position([box.x0, box.y0 + box.height * 0.2, box.width, box.height * 0.8])
 
@@ -216,4 +210,3 @@ if 'uncertainty' in filtered_data.columns:
         st.pyplot(plt)
         if(st.button('Save this plot as image', key = 4)):
             plt.savefig("gauss.pdf", format='pdf')
-# plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF

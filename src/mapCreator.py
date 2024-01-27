@@ -38,13 +38,11 @@ def get_random_color():
 from branca.colormap import LinearColormap
 
 def create_map_with_stability(gdf):
-    # Define a blue to orange colormap
     colors = ['#0000FF', '#FFA500']
     cmap = LinearColormap(colors, vmin=0, vmax=1)
 
     m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
                    min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
-    # Add the data
     folium.GeoJson(gdf,
                    style_function=lambda feature: {
                        'color': cmap(feature['properties']['all_stability']) if not pd.isna(
@@ -59,7 +57,6 @@ def create_map_with_stability(gdf):
                    tooltip=folium.GeoJsonTooltip(fields=['all_stability'])
                    ).add_to(m)
 
-    # Add the colormap to the map as a legend
     cmap.caption = "Stability"
     cmap.add_to(m)
     print('done')
@@ -72,7 +69,6 @@ def create_map_with_ids_new(gdf):
     m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
                    min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
 
-    # Add the data
     folium.GeoJson(gdf,
                    style_function=lambda feature: {
                        'color': color_dict[feature['properties']['id']],
@@ -90,11 +86,9 @@ def create_map_with_ids_new(gdf):
 def create_map_stability_with_empty(gdf):
     gdf.reset_index(drop=True, inplace=True)
     gdf.set_crs(epsg=4326, inplace=True)
-    # Convert the all_stability column to numeric values
     gdf['all_stability'] = pd.to_numeric(gdf['all_stability'], errors='coerce')
     m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
                    min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
-    # Add the data
     folium.GeoJson(gdf,
                    style_function=lambda feature: {
                        'color': 'turquoise' if feature['properties']['all_measurements'] == 0 else cmap(feature['properties']['all_stability']),
@@ -108,7 +102,6 @@ def create_map_stability_with_empty(gdf):
                    tooltip=folium.GeoJsonTooltip(fields=['all_stability'])
                    ).add_to(m)
 
-    # Add the colormap to the map
     cmap.add_to(m)
 
     return m._repr_html_()
@@ -118,7 +111,6 @@ def create_map_for_gauss(gdf):
     m = folium.Map(location=[51.1657, 10.4515], zoom_start=6, min_zoom=6, max_zoom=14,
                    min_lat=47, max_lat=55, min_lon=5, max_lon=15, control_scale=True)
 
-    # Add the data to the map
     folium.GeoJson(gdf,
                    style_function=lambda feature: {
                        'color': cmap(feature['properties']['all_stability']) if not pd.isna(
