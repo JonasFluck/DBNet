@@ -91,7 +91,7 @@ if(st.button('Save this plot as image', key=1)):
     plt.savefig("provider_overview.pdf", format='pdf')
 
 for provider, average in mainController.dto.avg_providers.items():
-    st.write(f"The average stability for {provider} is: {format(average, '.2f')}")
+    st.write(f"The average stability for {provider} is: {format(average, '.3f')}")
 
 if 'uncertainty' in filtered_data.columns:
     # Plot of the datapoints differentiated by whether they were observed or predicted
@@ -185,10 +185,14 @@ if 'uncertainty' in filtered_data.columns:
     #plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
     
     if 'uncertainty' in filtered_data.columns:
-        checkbox_subsample = st.checkbox("Show subsample of every 100th datapoint")
-        if checkbox_subsample:
+        subsample = st.radio('subsample size', ('every datapoint', 'every 10th datapoint', 'every 50th datapoint', 'every 100th datapoint'))
+        if subsample == 'every 10th datapoint':
+            subsample = filtered_data.iloc[::10]
+        elif subsample == 'every 50th datapoint':
+            subsample = filtered_data.iloc[::50]
+        elif subsample == 'every 100th datapoint':
             subsample = filtered_data.iloc[::100]
-        else:
+        elif subsample == 'every datapoint':
             subsample = filtered_data.copy()
         subsample['uncertainty'].fillna(0, inplace=True)
         # Plot of the datapoints differentiated by whether they were observed or predicted
@@ -202,8 +206,8 @@ if 'uncertainty' in filtered_data.columns:
         #plt.scatter(predicted['index'], predicted['all_stability'], color='orange', label='Predicted', s=20)
 
         data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
-        plt.scatter(data[data['all_measurements']!=0].index, data[data['all_measurements']!=0]['all_stability'], color='blue', label='Observed', s=3)
-        plt.scatter(data[data['all_measurements']==0].index, data[data['all_measurements']==0]['all_stability'], color='orange', label='Predicted', s=3)
+        plt.scatter(data[data['all_measurements']!=0].index, data[data['all_measurements']!=0]['all_stability'], color='blue', label='Observed', s=4)
+        plt.scatter(data[data['all_measurements']==0].index, data[data['all_measurements']==0]['all_stability'], color='orange', label='Predicted', s=4)
 
         # Überprüfen Sie, ob es nicht leere Daten in der 'uncertainty'-Spalte gibt, bevor Sie das Konfidenzintervall plotten
         if 'uncertainty' in subsample.columns and pd.api.types.is_numeric_dtype(subsample['uncertainty']):
@@ -211,16 +215,18 @@ if 'uncertainty' in filtered_data.columns:
             plt.fill_between(data.index,
                             data['all_stability'] - 1.96 * data['uncertainty'],
                             data['all_stability'] + 1.96 * data['uncertainty'],
-                            color='orange', alpha=0.2, label='Uncertainty')
+                            color='orange', alpha=0.3, label='Uncertainty')
 
-        plt.ylim(0.5, 1)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
-        #plt.yticks(np.arange(0, 1.1, 0.2))  # Setzt die y-Ticks in Schritten von 0,2
+        plt.ylim(0.4, 1.2)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
+        plt.yticks(np.arange(0, 1.1, 0.2))  # Setzt die y-Ticks in Schritten von 0,2
 
         plt.title('Stability of Predictions with 95% Confidence Interval')
         plt.xlabel('Index')
         plt.ylabel('Stability', fontsize=18)
         plt.legend()
+        plt.axhline(y=1, color='lightgrey', linestyle='--')
         plt.margins(x=0.05)
+        plt.margins(y=0.05)
         st.pyplot(plt)
         if(st.button('Save this plot as image', key = 4)):
             plt.savefig("gauss.pdf", format='pdf')
