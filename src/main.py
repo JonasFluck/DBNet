@@ -90,9 +90,6 @@ st.pyplot(fig)
 if(st.button('Save this plot as image', key=1)):
     plt.savefig("provider_overview.pdf", format='pdf')
 
-for provider, average in mainController.dto.avg_providers.items():
-    st.write(f"The average stability for {provider} is: {format(average, '.2f')}")
-
 if 'uncertainty' in filtered_data.columns:
     # Plot of the datapoints differentiated by whether they were observed or predicted
     observed = filtered_data[filtered_data['uncertainty'].isnull()]
@@ -181,8 +178,6 @@ if 'uncertainty' in filtered_data.columns:
         st.pyplot(plt)
         if(st.button('Save this plot as image', key = 3)):
             plt.savefig("provider_comparison.pdf", format='pdf')
-
-    #plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
     
     if 'uncertainty' in filtered_data.columns:
         checkbox_subsample = st.checkbox("Show subsample of every 100th datapoint")
@@ -198,8 +193,6 @@ if 'uncertainty' in filtered_data.columns:
         data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
 
         plt.figure(figsize=(10, 5))
-        #plt.scatter(observed['index'], observed['all_stability'], color='blue', label='Observed', s=20)
-        #plt.scatter(predicted['index'], predicted['all_stability'], color='orange', label='Predicted', s=20)
 
         data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
         plt.scatter(data[data['all_measurements']!=0].index, data[data['all_measurements']!=0]['all_stability'], color='blue', label='Observed', s=3)
@@ -214,7 +207,6 @@ if 'uncertainty' in filtered_data.columns:
                             color='orange', alpha=0.2, label='Uncertainty')
 
         plt.ylim(0.5, 1)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
-        #plt.yticks(np.arange(0, 1.1, 0.2))  # Setzt die y-Ticks in Schritten von 0,2
 
         plt.title('Stability of Predictions with 95% Confidence Interval')
         plt.xlabel('Index')
