@@ -14,7 +14,7 @@ plt.rcParams['font.size'] = 18
 bundeslaender = ['Baden-Wuerttemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland','Sachsen-Anhalt', 'Sachsen', 'Schleswig-Holstein', 'Thueringen']
 
 # Load the JSON data from a file    
-with open('./data/output_rbf_20_80.json', 'r', encoding='utf-8') as f:
+with open('./data/output_rbf_tr80_te20.json', 'r', encoding='utf-8') as f:
     json_data = json.load(f)
 mainController = MainController(json_data)
 bundesland_to_id = {bundesland: i for i, bundesland in enumerate(bundeslaender)}
