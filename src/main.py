@@ -35,9 +35,6 @@ if checkbox_specific_ids:
         st.error(f"Error: {e}")
         st.stop()
 
-# declare here to not throw errors later
-
-# Create radio buttons in the sidebar
 option = st.sidebar.radio(
     'Select a map',
     ('Map with id', 'Map with stability', 'Map with Gauss'))
@@ -90,9 +87,6 @@ st.pyplot(fig)
 if(st.button('Save this plot as image', key=1)):
     plt.savefig("provider_overview.pdf", format='pdf')
 
-for provider, average in mainController.dto.avg_providers.items():
-    st.write(f"The average stability for {provider} is: {format(average, '.3f')}")
-
 if 'uncertainty' in filtered_data.columns:
     # Plot of the datapoints differentiated by whether they were observed or predicted
     observed = filtered_data[filtered_data['uncertainty'].isnull()]
@@ -137,11 +131,10 @@ if 'uncertainty' in filtered_data.columns:
             if checkbox_state_gauss:
                 predicted = filtered_data[(filtered_data['all_measurements']==0) & (filtered_data['state_id'].isin(choosen_states_ids))]
                 average_stability_predicted = predicted.groupby('state_id')['all_stability'].mean()
-            # Plotting
         # Define the spacing
         inner_spacing = 0.5
-        outer_spacing = 0.5  # Decrease the space between the states
-        # Draw the lines
+        outer_spacing = 0.5
+
         for i in range(len(choosen_states_ids)):
             plt.hlines(y=i*(len(providers)), xmin=0, xmax=average_stability_observed[choosen_states_ids[i]]*100, color='#2F4F4F', linewidth=8, label='Observed' if i == 0 else "")
             if 'uncertainty' in mainController.dto.gdf.columns:
@@ -168,9 +161,7 @@ if 'uncertainty' in filtered_data.columns:
     
 
         plt.xlabel('Average Stability (%)', fontsize=18)
-        # Shrink current axis's height by 10% on the bottom
-        
-        # Shrink current axis's height by 10% on the bottom
+
         box = plt.gca().get_position()
         plt.gca().set_position([box.x0, box.y0 + box.height * 0.2, box.width, box.height * 0.8])
 
@@ -181,8 +172,6 @@ if 'uncertainty' in filtered_data.columns:
         st.pyplot(plt)
         if(st.button('Save this plot as image', key = 3)):
             plt.savefig("provider_comparison.pdf", format='pdf')
-
-    #plt.savefig("comparisonplot.pdf", format='pdf')  # Save the plot as a PDF
     
     if 'uncertainty' in filtered_data.columns:
         subsample = st.radio('subsample size', ('every datapoint', 'every 10th datapoint', 'every 50th datapoint', 'every 100th datapoint'))
@@ -202,12 +191,10 @@ if 'uncertainty' in filtered_data.columns:
         data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
 
         plt.figure(figsize=(10, 5))
-        #plt.scatter(observed['index'], observed['all_stability'], color='blue', label='Observed', s=20)
-        #plt.scatter(predicted['index'], predicted['all_stability'], color='orange', label='Predicted', s=20)
 
         data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
-        plt.scatter(data[data['all_measurements']!=0].index, data[data['all_measurements']!=0]['all_stability'], color='blue', label='Observed', s=4)
-        plt.scatter(data[data['all_measurements']==0].index, data[data['all_measurements']==0]['all_stability'], color='orange', label='Predicted', s=4)
+        plt.scatter(data[data['all_measurements']!=0].index, data[data['all_measurements']!=0]['all_stability'], color='blue', label='Observed', s=3)
+        plt.scatter(data[data['all_measurements']==0].index, data[data['all_measurements']==0]['all_stability'], color='orange', label='Predicted', s=3)
 
         # Überprüfen Sie, ob es nicht leere Daten in der 'uncertainty'-Spalte gibt, bevor Sie das Konfidenzintervall plotten
         if 'uncertainty' in subsample.columns and pd.api.types.is_numeric_dtype(subsample['uncertainty']):
@@ -215,7 +202,7 @@ if 'uncertainty' in filtered_data.columns:
             plt.fill_between(data.index,
                             data['all_stability'] - 1.96 * data['uncertainty'],
                             data['all_stability'] + 1.96 * data['uncertainty'],
-                            color='orange', alpha=0.3, label='Uncertainty')
+                            color='orange', alpha=0.2, label='Uncertainty')
 
         plt.ylim(0.4, 1.2)  # Setzt die y-Achsenbegrenzungen von 0 bis 1
         plt.yticks(np.arange(0, 1.1, 0.2))  # Setzt die y-Ticks in Schritten von 0,2
@@ -226,7 +213,6 @@ if 'uncertainty' in filtered_data.columns:
         plt.legend()
         plt.axhline(y=1, color='lightgrey', linestyle='--')
         plt.margins(x=0.05)
-        plt.margins(y=0.05)
         st.pyplot(plt)
         if(st.button('Save this plot as image', key = 4)):
             plt.savefig("gauss.pdf", format='pdf')
