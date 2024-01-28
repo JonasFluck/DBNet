@@ -197,27 +197,6 @@ if 'uncertainty' in filtered_data.columns:
         plt.scatter(data[data['all_measurements']==0].index, data[data['all_measurements']==0]['all_stability'], color='orange', label='Predicted', s=3)
 
         # Überprüfen Sie, ob es nicht leere Daten in der 'uncertainty'-Spalte gibt, bevor Sie das Konfidenzintervall plotten
-        
-    if 'uncertainty' in filtered_data.columns:
-        checkbox_subsample = st.checkbox("Show subsample of every 100th datapoint")
-        if checkbox_subsample:
-            subsample = filtered_data.iloc[::50]
-        else:
-            subsample = filtered_data.copy()
-        subsample['uncertainty'].fillna(0, inplace=True)
-        # Plot of the datapoints differentiated by whether they were observed or predicted
-        observed = subsample[subsample['all_measurements']!=0]
-        predicted = subsample[subsample['all_measurements']==0]
-
-        data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
-
-        plt.figure(figsize=(10, 5))
-        #plt.scatter(observed['index'], observed['all_stability'], color='blue', label='Observed', s=20)
-        #plt.scatter(predicted['index'], predicted['all_stability'], color='orange', label='Predicted', s=20)
-
-        data = pd.concat([observed, predicted]).sort_index().reset_index(drop=True)
-        plt.scatter(data[data['all_measurements']!=0].index, data[data['all_measurements']!=0]['all_stability'], color='blue', label='Observed', s=3)
-        plt.scatter(data[data['all_measurements']==0].index, data[data['all_measurements']==0]['all_stability'], color='orange', label='Predicted', s=3)
         plt.axhline(y=1, color='lightgrey', linestyle='--')
         # Überprüfen Sie, ob es nicht leere Daten in der 'uncertainty'-Spalte gibt, bevor Sie das Konfidenzintervall plotten
         if 'uncertainty' in subsample.columns and pd.api.types.is_numeric_dtype(subsample['uncertainty']):
