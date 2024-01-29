@@ -16,7 +16,7 @@ and you will be able to interact with the project in the browser.
 
 ## Quickstart Guide for Deutsche Bahn Network Visualization
 
-The maps **'Map w/Stability'** and **'Map w/KNN'** represent the initial attempts to visualize the network stability of the entire Deutsche Bahn network.
+The maps **'Map w/Stability'** represents the initial attempt to visualize the network stability of the entire Deutsche Bahn network.
 
 - **'Map w/ID'**: Displays all network routes in different colors, with the corresponding ID of the route section shown on hover.
 
@@ -24,14 +24,4 @@ The maps **'Map w/Stability'** and **'Map w/KNN'** represent the initial attempt
 
 - **'Map w/Gauss'**: Check the network stability under this option. Note that some connections consist of multiple route sections. Additional information on estimated values, including their number and uncertainty, is available.
 
-### Quick Start Connections:
-
-1. **Cologne - Frankfurt am Main**
-   - IDs: 27, 16, 320, 69, 76, 72, 71
-
-2. **Nuremberg - Munich**
-   - IDs: 1, 311, 113
-
-3. **Hamburg - Bremen - Muenster**
-   - IDs: 257, 253, 331, 208, 301, 284, 118
 
